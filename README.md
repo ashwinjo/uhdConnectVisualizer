@@ -50,18 +50,13 @@ Nothing is sent anywhere. Conversion runs in the browser from `migrate.js`.
 Developers who still want a CLI can run `uhd_migration.py` (Python 3.8+, standard library only):
 
 ```
-python uhd_migration.py old.json
-python uhd_migration.py old.json --stdout
+python uhd_migration.py config.json
+python uhd_migration.py config.json --stdout
 ```
 
 `tutorials.js` is generated rather than fetched at runtime because a page opened over `file://`
 cannot fetch a sibling file. If it is missing the panel says how to regenerate it, and nothing else
 about the page changes.
-
-`uhd_stats.html` is the older standalone counter tool, kept so it can still be opened on its own. It
-is the one file that needs `axios.min.js`; the app itself uses `fetch` and has no dependencies.
-Everything it does is in the Device panel now, so use that unless you specifically want the small
-single-file version.
 
 **No configuration is ever stored in the browser.** Configs live in files you open and save, so the
 same config can be handed to whatever applies it to the box. The Device panel does remember two
@@ -116,12 +111,12 @@ selected or hovered. All connections are drawn, whether they land on a plain por
   regular port or a group member, not both — already assigned cages are refused.
 - The main cage is drawn with a red inner edge, later members with a dashed border, and both carry
   the group name.
-- A cage that takes part in more than one object (a port can appear in several groups, as `snic1`
-  and `snic2` do in `old.new.json`) gets a red corner dot; the tooltip and inspector list them all.
+- A cage that takes part in more than one object (a port can appear in several groups) gets a red
+  corner dot; the tooltip and inspector list them all.
 - The inspector edits the group: its name, `ingress_distribution` (`copy` for LAG-style groups,
   `split` otherwise), and the Layer 1 profile of each member port. Deleting a group is blocked while
   a connection still names it.
-- The chassis legend marks group main and member cages. The connection sheet Ports column shows the group name next to the cages (`P9+10  snic1_port_group_2`), so two groups that share cages or reverse each other stay distinguishable.
+- The chassis legend marks group main and member cages. The connection sheet Ports column shows the group name next to the cages (`P9+10  group_a`), so two groups that share cages or reverse each other stay distinguishable.
 - Dragging from a group cage creates a connection on the group. Dragging between two cages of the
   same group is refused, since a connection needs two different ports.
 

@@ -285,20 +285,6 @@ A.state.config = noAnchor; A.state.meta = nav.meta;
 ok(/port group with no valid front-panel port/.test(A.roReason(noAnchor.connections[0])),
   'the read-only reason names the actual problem');
 
-// the real migrated config the user brought in
-const REAL = path.join(ROOT, 'old.new.json');
-if (fs.existsSync(REAL)) {
-  const real = JSON.parse(fs.readFileSync(REAL, 'utf8'));
-  const rv = A.validate(real);
-  A.state.config = real; A.state.meta = rv.meta;
-  ok(rv.errors.length === 0, 'old.new.json validates', rv.errors.join('\n       '));
-  ok(rv.meta.readOnly.size === 0, 'every connection in old.new.json is editable');
-  const drawn = (real.connections || []).filter(c =>
-    (c.endpoints || []).length === 2 && (c.endpoints || []).every(e => A.anchorNumOf(e.port_name) != null));
-  ok(drawn.length === real.connections.length, 'all ' + real.connections.length + ' connections in old.new.json are drawable');
-  ok(norm(JSON.parse(A.serialize(real))) === norm(JSON.parse(fs.readFileSync(REAL, 'utf8'))), 'old.new.json round-trips losslessly');
-}
-
 /* ---------- 7. outside entities (display-only extra key) ---------- */
 console.log('\nOutside entities');
 A.state.config = groupCfg();

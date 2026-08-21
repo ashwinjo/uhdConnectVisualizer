@@ -2,14 +2,12 @@
  * Loads migrate.js and verifies it matches uhd_migration.py:
  *   1. the Python --selftest fixtures,
  *   2. hard failures (internal endpoints, bad JSON, missing vlan_double parts),
- *   3. .http head/tail kept verbatim,
- *   4. old.json migrates to the same document the Python CLI writes.
+ *   3. .http head/tail kept verbatim.
  * Run: node tools/migrate-test.cjs
  */
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
 const MIGRATE_JS = path.join(ROOT, 'migrate.js');
@@ -193,27 +191,6 @@ ok(/GET \/api\/status/.test(httpOut.text), 'trailing http request kept');
 ok(!/"choice": "front_panel"/.test(httpOut.text) && /"port_name": "cloud_port_1"/.test(httpOut.text),
   'http body is the new schema');
 ok(httpOut.jsonText && httpOut.jsonText.charAt(0) === '{', 'jsonText is JSON only');
-
-const oldPath = path.join(ROOT, 'old.json');
-if (fs.existsSync(oldPath)) {
-  const py = spawnSync('python3', [path.join(ROOT, 'uhd_migration.py'), oldPath, '--stdout', '--force'], {
-    encoding: 'utf8', maxBuffer: 20 * 1024 * 1024
-  });
-  if (py.error || py.status) {
-    ok(false, 'python migrates old.json', (py.stderr || py.error && py.error.message || '').slice(0, 400));
-  } else {
-    const js = M.migrateText(fs.readFileSync(oldPath, 'utf8'), { fileName: 'old.json' });
-    ok(js.ok, 'js migrates old.json');
-    let pyObj, jsObj;
-    try { pyObj = JSON.parse(py.stdout); jsObj = JSON.parse(js.text); }
-    catch (e) { pyObj = jsObj = null; }
-    ok(!!pyObj && JSON.stringify(pyObj) === JSON.stringify(jsObj),
-      'js old.json equals python --stdout',
-      pyObj ? 'parsed documents differ' : 'could not parse one of the outputs');
-  }
-} else {
-  console.log('  skip old.json (file not in repo)');
-}
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

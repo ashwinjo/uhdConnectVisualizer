@@ -36,7 +36,6 @@ Loads `app.js` against a stub DOM and checks, against the real files in `docs/sa
 - port groups anchor on their first port, label every member cage, count as profile users, stay
   editable, and are rejected when malformed (empty, duplicated port, bad `ingress_distribution`,
   unknown profile, breakout channel),
-- `old.new.json` in the repo root, if present, validates with every connection drawable,
 - outside-entity boxes default to the port name, write nothing until customised, drop the
   `x_visualizer` key again when the last override is reset, follow a port rename, and warn (never
   error) when the key is malformed or names a port that no longer exists.
@@ -51,8 +50,7 @@ Loads `migrate.js` and checks it against `uhd_migration.py`:
 
 - the Python `--selftest` fixtures (double-encap, Q-in-Q `vlan_double`, `all_vlans`, VLAN ranges),
 - hard failures (`internal` endpoints, incomplete `vlan_double`, invalid JSON),
-- `.http` head/tail kept verbatim, JSON body rewritten,
-- `old.json`, if present, migrates to the same document as `python3 uhd_migration.py old.json --stdout --force`.
+- `.http` head/tail kept verbatim, JSON body rewritten.
 
 ## `tutorials-test.cjs` — no dependencies
 
