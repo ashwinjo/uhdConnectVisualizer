@@ -361,6 +361,22 @@ function fnChips(conn) {
   return out;
 }
 function wireBadge(conn) { return fnChips(conn).map(c => c.text).join('+'); }
+function connMapLines(conn) {
+  const lines = [];
+  for (const fn of conn.functions || []) {
+    const c = fn && fn.choice, b = (fn && fn[c]) || {};
+    if (c === 'connect_vlan_vxlan') {
+      lines.push(vlanText(getPath(b, 'vlan_endpoint_settings.vlan')) + ' \u2192 ' + idText(getPath(b, 'vxlan_endpoint_settings.vni'), 'vni', 'vni_range', 'VNI'));
+    } else if (c === 'connect_vlan_nvgre') {
+      lines.push(vlanText(getPath(b, 'vlan_endpoint_settings.vlan')) + ' \u2192 ' + idText(getPath(b, 'nvgre_endpoint_settings.vsid'), 'vsid', 'vsid_range', 'VSID'));
+    } else if (c === 'connect_ethernet' || c === 'connect_arp' || c === 'connect_ip') {
+      lines.push(vlanText(getPath(b, 'vlan_endpoint_settings_port1.vlan')) + ' \u2192 ' + vlanText(getPath(b, 'vlan_endpoint_settings_port2.vlan')));
+    } else if (c) {
+      lines.push(fnSegment(fn));
+    }
+  }
+  return lines;
+}
 function wireClass(conn) {
   const first = (conn.functions || []).find(f => f && FN[f.choice]);
   return first ? FN[first.choice].cls : 't-eth';
@@ -1260,7 +1276,7 @@ function renderWires() {
     return { x: r.left + r.width / 2 - svgRect.left, y: r.bottom - svgRect.top };
   };
 
-  let out = '', badges = '';
+  let out = '', badges = '', selBadges = '';
   const emit = (item, lane, isDraft) => {
     const A = anchor(item.a), B = anchor(item.b);
     if (!A || !B) return;
@@ -1268,15 +1284,21 @@ function renderWires() {
     const off = ((lane % 3) - 1) * 2.5;
     const d = wireD(A, B, laneY, off, cellPx);
     const x1 = A.x, x2 = B.x;
-    const badge = isDraft ? 'draft' : wireBadge(item.conn);
+    const sel = !isDraft && state.sel.kind === 'connection' && state.sel.idx === item.idx;
+    const map = (!isDraft && sel) ? connMapLines(item.conn) : [];
+    const lines = isDraft ? ['draft'] : (map.length ? map : [wireBadge(item.conn)]);
     const cls = ['conn'];
     if (isDraft) cls.push('draft');
-    if (!isDraft && state.sel.kind === 'connection' && state.sel.idx === item.idx) cls.push('sel');
+    if (sel) cls.push('sel');
     if (!isDraft && state.hover && state.hover.kind === 'connection' && state.hover.idx === item.idx) cls.push('hl');
     if (item.ro) cls.push('ro');
     const wcls = isDraft ? 't-eth' : wireClass(item.conn);
     const dbl = !isDraft && (item.conn.functions || []).some(f => f && f.choice === 'connect_arp');
-    const bw = Math.max(26, badge.length * 6 + 10);
+    const fs = map.length ? 11 : 9;
+    const lh = map.length ? 14 : 14;
+    const longest = lines.reduce((n, s) => Math.max(n, s.length), 0);
+    const bw = Math.max(26, longest * (map.length ? 7.1 : 6) + (map.length ? 16 : 10));
+    const bh = 6 + lines.length * lh;
     const bx = (x1 + x2) / 2, by = laneY;
     const g = '<g class="' + cls.join(' ') + '"' + (isDraft ? '' : ' data-idx="' + item.idx + '"') + '>';
     out += g
@@ -1285,11 +1307,16 @@ function renderWires() {
       + (dbl ? '<path class="wire2" transform="translate(0,2.6)" d="' + d + '"></path>' : '')
       + '<path class="hit" d="' + d + '"></path>'
       + '</g>';
+    const text = lines.map((s, i) =>
+      '<tspan x="' + bx + '" dy="' + (i === 0 ? 0 : lh) + '">' + esc(s) + '</tspan>'
+    ).join('');
+    const ty = by - bh / 2 + 4 + lh / 2;
     // Badges go in a second pass so a later wire cannot paint over an earlier label.
-    badges += g.replace('class="' + cls.join(' ') + '"', 'class="' + cls.concat('badgeg').join(' ') + '"')
-      + '<rect class="badgebg" x="' + (bx - bw / 2) + '" y="' + (by - 7) + '" width="' + bw + '" height="14" rx="3"></rect>'
-      + '<text class="badge" x="' + bx + '" y="' + (by + 0.5) + '">' + esc(badge) + '</text>'
+    const chunk = g.replace('class="' + cls.join(' ') + '"', 'class="' + cls.concat('badgeg').join(' ') + '"')
+      + '<rect class="badgebg" x="' + (bx - bw / 2) + '" y="' + (by - bh / 2) + '" width="' + bw + '" height="' + bh + '" rx="3"></rect>'
+      + '<text class="badge" x="' + bx + '" y="' + ty + '" font-size="' + fs + '">' + text + '</text>'
       + '</g>';
+    if (sel) selBadges += chunk; else badges += chunk;
   };
   drawable.forEach((item, i) => emit(item, i, false));
   if (draft) {
@@ -1300,7 +1327,7 @@ function renderWires() {
     const A = anchor(state.drag.fromNum);
     if (A) out += '<path id="rubber" d="M ' + A.x + ' ' + A.y + ' L ' + (state.drag.x - svgRect.left) + ' ' + (state.drag.y - svgRect.top) + '"></path>';
   }
-  svg.innerHTML = out + badges;
+  svg.innerHTML = out + badges + selBadges;
   applyHover();
 }
 

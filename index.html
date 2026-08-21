@@ -503,7 +503,8 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 #wireSvg .hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; cursor: pointer; }
 #wireSvg text.badge { fill: #fff; font-family: var(--mono); font-size: 9px; font-weight: 600; text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
 #wireSvg rect.badgebg { fill: #0a0a0bee; stroke: #ffffff44; }
-#wireSvg g.conn.sel rect.badgebg { stroke: var(--red-soft); }
+#wireSvg g.conn.sel rect.badgebg { fill: #1a0d10f2; stroke: var(--red-soft); stroke-width: 1.2; }
+#wireSvg g.conn.sel text.badge { font-size: 11px; }
 #wireSvg g.conn.draft rect.badgebg { stroke: var(--amber); }
 #rubber { stroke: var(--red-soft); stroke-width: 1.8; stroke-dasharray: 5 4; fill: none; }
 
@@ -919,7 +920,7 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
 #groupPickBar code { font-family: var(--mono); color: #ffd0d6; }
 #groupPickBar .spacer { flex: 1; min-width: 8px; }
 #toast {
-  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  position: fixed; bottom: 42px; left: 50%; transform: translateX(-50%);
   background: var(--panel-3); border: 1px solid var(--line-2); border-left: 2px solid var(--red);
   padding: 9px 14px; border-radius: 5px; font-size: 12px; z-index: 80;
   box-shadow: var(--shadow);
@@ -929,6 +930,18 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
   display: flex; align-items: center; justify-content: center;
   border: 2px dashed var(--red); font-size: 15px; letter-spacing: .3px;
 }
+#credit {
+  flex: 0 0 auto;
+  text-align: center;
+  padding: 7px 14px;
+  font-size: 11.5px;
+  color: var(--muted-2);
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+  letter-spacing: .15px;
+}
+#credit b { color: var(--text); font-weight: 600; }
+#credit .heart { color: var(--red-soft); padding: 0 1px; }
 </style>
 </head>
 <body>
@@ -1052,6 +1065,8 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
     </div>
   </aside>
 </div>
+
+<footer id="credit">Made with <span class="heart" aria-hidden="true">♥</span> love by <b>@Ashwin Joshi</b></footer>
 
 <div id="modalBack" class="hidden"></div>
 
