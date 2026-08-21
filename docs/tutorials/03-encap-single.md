@@ -258,8 +258,7 @@ underlay.
 
 **Keep the outer header on the tunnel side.** `outgoing_vxlan_header` belongs inside
 `vxlan_endpoint_settings`. It used to live under `vlan_endpoint_settings`, and configs written before
-July 2026 have it there. The device will not apply it from the old position — run those through
-`uhd_migration.py`.
+July 2026 have it there. The device will not apply it from the old position — run those through **Convert**.
 
 **`udp_src_port` and `udp_dst_port` go inside the header**, not on `vxlan_endpoint_settings`
 alongside `vni`. Same schema break, same fix.
@@ -268,8 +267,8 @@ alongside `vni`. Same schema break, same fix.
 `choice` on each is what selects the underlay family. There is no separate `_v6` header any more.
 
 **`routing_method` must sit on the settings block.** Nesting it inside `protocols` is accepted with
-HTTP 200 and then silently ignored, leaving the connection on the `vni_routing` default. The
-migration script hoists it if it finds it misplaced.
+HTTP 200 and then silently ignored, leaving the connection on the `vni_routing` default. Convert
+hoists it if it finds it misplaced.
 
 **Two connections on one port need distinct tunnel IDs.** Reusing a VNI on the same port group is a
 warning in the visualizer and a real conflict on the device.

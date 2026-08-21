@@ -25,7 +25,9 @@ where each JSON block can be copied and the complete ones can be loaded straight
 | Stack two VXLAN layers | [Double encapsulation](04-encap-double.md#vxlan-vxlan) | `encap_double_vxlan_vxlan` |
 | Stack two NVGRE layers | [Double encapsulation](04-encap-double.md#nvgre-nvgre) | `encap_double_nvgre_nvgre` |
 | Stack VXLAN over NVGRE | [Double encapsulation](04-encap-double.md#vxlan-nvgre) | `encap_double_vxlan_nvgre` |
-| Split one cage into four sub-ports | [Breakout ports](05-breakout.md) | `breakout_4x100g`, `_4x25g`, `_4x10g` |
+| Split one cage into four sub-ports | [Breakout ports](05-breakout.md) | `breakout_4x100g`, `breakout_4x25g`, `breakout_4x10g` |
+
+Each sample is the file `docs/samples/<name>/<name>.json`.
 
 ## The three sections of every config
 
@@ -100,7 +102,8 @@ and IP lives on a function.
 This is the one thing worth internalising, because it changed in the July 2026 schema break. If you
 are copying from an older config you will see endpoints shaped like
 `{"choice": "front_panel", "front_panel": {"port_name": "p1", "vlan": {...}}}`. That form is gone.
-Run such a config through `uhd_migration.py` in the repo root rather than editing it by hand.
+Run such a config through **Convert** in the visualizer rather than editing it by hand. Conversion
+runs locally from `migrate.js`; nothing is sent anywhere.
 
 Endpoint order is meaningful and permanent. `endpoints[0]` is **port1** and `endpoints[1]` is
 **port2**, and the passthrough functions address them by those names. *Swap ends* in the inspector
@@ -202,7 +205,7 @@ you create the connection, then add the second function to it.
 
 Ordering is fixed: **`functions[0]` is the outer layer, `functions[1]` is the inner.** The shipped
 Q-in-Q samples follow it (outer VLAN 100 in `functions[0]`, inner VLAN 200 in `functions[1]`), and
-it is the order `uhd_migration.py` produces when it expands a legacy `vlan_double` endpoint.
+it is the order **Convert** produces when it expands a legacy `vlan_double` endpoint.
 
 The two functions do not have to be the same type. `encap_double_vxlan_nvgre` stacks a
 `connect_vlan_vxlan` over a `connect_vlan_nvgre`, which is why its tunnel-side tags read
@@ -379,8 +382,8 @@ Before posting, you can check a config against the same rules the visualizer enf
 ## Reference
 
 - `docs/openapi.json` — the authoritative schema. Field descriptions there beat anything here.
-- `docs/samples/` — the scenario JSON these tutorials walk through.
+- `docs/samples/<name>/<name>.json` — the fourteen scenario files these tutorials walk through
+  (eleven canvas-editable, three breakout). Listed in the table at the top.
 - `docs/samples/README.txt` — the vendor's own curl instructions.
-- `uhd_migration.py` — converts pre-July-2026 configs to the current schema. `--selftest` proves it
-  still works, `--diff` shows what it would change.
+- **Convert** in the visualizer (`migrate.js`) — converts pre-July-2026 configs to the current schema.
 - `../../README.md` — the visualizer's own behaviour in detail, including port groups.
