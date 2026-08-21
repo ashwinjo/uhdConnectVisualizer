@@ -1,0 +1,92 @@
+{
+  "profiles": {
+    "layer_1_profiles": [
+      {
+        "name": "manual_400g_rs",
+        "choice": "manual",
+        "link_speed": "speed_400_gbps",
+        "manual": {
+          "fec_mode": "reed_solomon"
+        }
+      }
+    ]
+  },
+  "front_panel_ports": [
+    {
+      "name": "scenario2_ingress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 25,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    },
+    {
+      "name": "scenario2_egress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 26,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "name": "Scenario 2 - VLAN to NVGRE",
+      "endpoints": [
+        {
+          "port_name": "scenario2_ingress",
+          "tags": [
+            "vlan"
+          ]
+        },
+        {
+          "port_name": "scenario2_egress",
+          "tags": [
+            "nvgre"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "choice": "connect_vlan_nvgre",
+          "connect_vlan_nvgre": {
+            "vlan_endpoint_settings": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 101
+              }
+            },
+            "nvgre_endpoint_settings": {
+              "vsid": {
+                "choice": "vsid",
+                "vsid": 8001
+              },
+              "protocols": {},
+              "outgoing_nvgre_header": {
+                "src_mac": {
+                  "choice": "mac",
+                  "mac": "80:09:02:01:00:03"
+                },
+                "dst_mac": {
+                  "choice": "mac",
+                  "mac": "00:50:f2:88:00:02"
+                },
+                "src_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.4.0.1"
+                },
+                "dst_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.0.0.4"
+                },
+                "flow_id": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

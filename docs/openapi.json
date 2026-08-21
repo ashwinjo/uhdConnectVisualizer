@@ -1,0 +1,1604 @@
+{
+    "components": {
+        "responses": {},
+        "schemas": {
+            "ChoiceNone": {
+                "description": "A empty container that is used to indicate a null choice.",
+                "type": "object"
+            },
+            "Error.Details": {
+                "type": "object",
+                "properties": {
+                    "errors": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Error.Item"
+                        }
+                    }
+                }
+            },
+            "Warning.Details": {
+                "type": "object",
+                "properties": {
+                    "warnings": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Error.Item"
+                        }
+                    }
+                }
+            },
+            "Error.Item": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "integer"
+                    },
+                    "detail": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MacAddressRange": {
+                "type": "object",
+                "description": "A range of MAC addresses.",
+                "required": [
+                    "start"
+                ],
+                "properties": {
+                    "start": {
+                        "type": "string",
+                        "format": "mac",
+                        "description": "An Ethernet MAC address."
+                    },
+                    "count": {
+                        "type": "integer",
+                        "default": 0,
+                        "minimum": 0,
+                        "description": "The number of MAC addresses in the range. If 0, the range will be driven from another, connection-dependent, range. There must be at least one range in a connection with a non-zero count."
+                    },
+                    "step": {
+                        "type": "string",
+                        "default": "00:00:00:00:00:01",
+                        "description": "The step between MAC addresses in the range."
+                    }
+                }
+            },
+            "MacAddressOrRange": {
+                "type": "object",
+                "description": "A MAC address descriptor that allows a single MAC, or a range of MACs. Choices may be restricted by validation for certain use cases.",
+                "required": [
+                    "choice"
+                ],
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "mac",
+                            "mac_range"
+                        ]
+                    },
+                    "mac": {
+                        "type": "string",
+                        "format": "mac",
+                        "description": "An Ethernet MAC address."
+                    },
+                    "mac_range": {
+                        "$ref": "#/components/schemas/MacAddressRange"
+                    }
+                }
+            },
+            "Ipv4AddressRange": {
+                "type": "object",
+                "description": "A range of IP addresses. A range with only a start value is useful as a destination when a range is used as a source.",
+                "required": [
+                    "start"
+                ],
+                "properties": {
+                    "start": {
+                        "description": "The first IP in the range\nA single IPv4 address, possibly with a CIDR suffix.",
+                        "type": "string",
+                        "format": "ipv4"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "default": 0,
+                        "minimum": 0,
+                        "description": "The number of IP addresses in the range. If 0, the range will be driven from another, connection-dependent, range. There must be at least one range in a connection with a non-zero count."
+                    },
+                    "step": {
+                        "type": "string",
+                        "default": "0.0.0.1",
+                        "description": "The step between IP addresses in the range."
+                    },
+                    "subnet_bits": {
+                        "type": "integer",
+                        "default": 32,
+                        "minimum": 0,
+                        "maximum": 32,
+                        "description": "The number of bits in the subnet mask. If set to something other than the default (32), then count and step are not allowed, and the count is determined by the subnet mask."
+                    }
+                }
+            },
+            "Ipv6AddressRange": {
+                "type": "object",
+                "description": "A range of IP addresses. A range with only a start value is useful as a destination when a range is used as a source.",
+                "required": [
+                    "start"
+                ],
+                "properties": {
+                    "start": {
+                        "description": "The first IP in the range\nA single IPv6 address, possibly with a CIDR suffix.",
+                        "type": "string",
+                        "format": "ipv6"
+                    },
+                    "count": {
+                        "type": "integer",
+                        "default": 0,
+                        "minimum": 0,
+                        "description": "The number of IP addresses in the range. If 0, the range will be driven from another, connection-dependent, range. There must be at least one range in a connection with a non-zero count."
+                    },
+                    "step": {
+                        "type": "string",
+                        "default": "::1",
+                        "description": "The step between IP addresses in the range."
+                    },
+                    "subnet_bits": {
+                        "type": "integer",
+                        "default": 128,
+                        "minimum": 0,
+                        "maximum": 128,
+                        "description": "The number of bits in the subnet mask. If set to something other than the default (128), then count and step are not allowed, and the count is determined by the subnet mask."
+                    }
+                }
+            },
+            "IpAddressOrRange": {
+                "type": "object",
+                "description": "An IP address descriptor that allows a single IP, or a range of IPs.",
+                "required": [
+                    "choice"
+                ],
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "ipv4",
+                            "ipv4_range",
+                            "ipv6",
+                            "ipv6_range"
+                        ]
+                    },
+                    "ipv4": {
+                        "type": "string",
+                        "format": "ipv4",
+                        "description": "A single IPv4 address, possibly with a CIDR suffix."
+                    },
+                    "ipv4_range": {
+                        "$ref": "#/components/schemas/Ipv4AddressRange"
+                    },
+                    "ipv6": {
+                        "type": "string",
+                        "format": "ipv6",
+                        "description": "A single IPv6 address, possibly with a CIDR suffix."
+                    },
+                    "ipv6_range": {
+                        "$ref": "#/components/schemas/Ipv6AddressRange"
+                    }
+                }
+            },
+            "IpAddressOrRange_v4": {
+                "type": "object",
+                "description": "An IP address descriptor that allows a single IP, or a range of IPs.",
+                "required": [
+                    "choice"
+                ],
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "ipv4",
+                            "ipv4_range"
+                        ]
+                    },
+                    "ipv4": {
+                        "type": "string",
+                        "format": "ipv4",
+                        "description": "A single IPv4 address, possibly with a CIDR suffix."
+                    },
+                    "ipv4_range": {
+                        "$ref": "#/components/schemas/Ipv4AddressRange"
+                    }
+                }
+            },
+            "IpAddressOrRange_v6": {
+                "type": "object",
+                "description": "An IP address descriptor that allows a single IP, or a range of IPs.",
+                "required": [
+                    "choice"
+                ],
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "ipv6",
+                            "ipv6_range"
+                        ]
+                    },
+                    "ipv6": {
+                        "type": "string",
+                        "format": "ipv6",
+                        "description": "A single IPv6 address, possibly with a CIDR suffix."
+                    },
+                    "ipv6_range": {
+                        "$ref": "#/components/schemas/Ipv6AddressRange"
+                    }
+                }
+            },
+            "TcpPortList": {
+                "type": "array",
+                "description": "A list of TCP port numbers. An empty list means all ports.",
+                "items": {
+                    "type": "string",
+                    "description": "A TCP port. Can be dns, icmp, bgp, ftp, ftps, http, https, or a port number (in quotes).",
+                    "pattern": "^(dns)|(icmp)|(bgp)|(ftp)|(ftps)|(http)|(https)|([0-9]+)$"
+                },
+                "default": []
+            },
+            "UdpPortList": {
+                "type": "array",
+                "description": "A list of UDP port number strings (i.e. in quotes). An empty list means all ports.",
+                "items": {
+                    "type": "string",
+                    "description": "A UDP port.",
+                    "pattern": "^(dns)|(dhcp)|(ntp)|(tftp)|([0-9]+)$"
+                },
+                "default": []
+            },
+            "VlanIdRange": {
+                "type": "object",
+                "description": "A range of VLAN IDs.",
+                "required": [
+                    "start"
+                ],
+                "properties": {
+                    "start": {
+                        "description": "The first VLAN ID of the range",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 4094
+                    },
+                    "count": {
+                        "type": "integer",
+                        "default": 0,
+                        "minimum": 0,
+                        "description": "The number of VLAN IDs in the range. If not specified, defaults to 1."
+                    },
+                    "step": {
+                        "type": "integer",
+                        "default": 1,
+                        "minimum": 1,
+                        "description": "The step between VLAN IDs in the range."
+                    }
+                }
+            },
+            "VlanIdOption": {
+                "type": "object",
+                "description": "A VLAN descriptor that allows a VLAN, range of VLANs, or no VLAN at all.",
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "vlan",
+                            "vlan_range",
+                            "non_vlan"
+                        ],
+                        "default": "non_vlan"
+                    },
+                    "vlan": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 4094
+                    },
+                    "vlan_range": {
+                        "$ref": "#/components/schemas/VlanIdRange"
+                    },
+                    "non_vlan": {
+                        "$ref": "#/components/schemas/ChoiceNone"
+                    }
+                }
+            },
+            "PortVlanSettings": {
+                "type": "object",
+                "description": "Per-port VLAN settings for a passthrough function (connect_arp / connect_ip / connect_ethernet). Each passthrough function carries one of these per positional endpoint (port1 = endpoints[0], port2 = endpoints[1]), so the two ports of a bidirectional bypass can have independent VLAN values (including VLAN translation and Q-in-Q, via two functions[] entries each with their own port1/port2 settings).",
+                "properties": {
+                    "vlan": {
+                        "description": "The VLAN ID (or range) to match/apply on this port for this function. Absence or `non_vlan` means untagged traffic on this port.",
+                        "$ref": "#/components/schemas/VlanIdOption"
+                    }
+                }
+            },
+            "VsidRange": {
+                "type": "object",
+                "description": "A range of VSID Network Identifiers. A range with only a start value is useful as a destination when a range is used as a source.",
+                "required": [
+                    "start"
+                ],
+                "properties": {
+                    "start": {
+                        "description": "The first VSID in the range",
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 16777215
+                    },
+                    "count": {
+                        "type": "integer",
+                        "default": 0,
+                        "minimum": 0,
+                        "description": "The number of VSIDs in the range. If 0 (the default), the range will be driven from another, connection-dependent, range. There must be at least one range in a connection with a non-zero count."
+                    },
+                    "step": {
+                        "type": "integer",
+                        "description": "The step between VSIDs in the range.",
+                        "default": 1,
+                        "minimum": 1
+                    }
+                }
+            },
+            "VsidOrRange": {
+                "type": "object",
+                "description": "A NVGRE virtual segment ID that allows a single VSID, or a range of VSIDs.",
+                "required": [
+                    "choice"
+                ],
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "vsid",
+                            "vsid_range"
+                        ]
+                    },
+                    "vsid": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 16777215
+                    },
+                    "vsid_range": {
+                        "$ref": "#/components/schemas/VsidRange"
+                    }
+                }
+            },
+            "VniRange": {
+                "type": "object",
+                "description": "A range of Vxlan Network Identifier. A range with only a start value is useful as a destination when a range is used as a source.",
+                "required": [
+                    "start"
+                ],
+                "properties": {
+                    "start": {
+                        "description": "The first VNI in the range",
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 16777215
+                    },
+                    "count": {
+                        "type": "integer",
+                        "default": 0,
+                        "minimum": 0,
+                        "description": "The number of VNIs in the range. If 0 (the default), the range will be driven from another, connection-dependent, range. There must be at least one range in a connection with a non-zero count."
+                    },
+                    "step": {
+                        "type": "integer",
+                        "description": "The step between VNIs in the range.",
+                        "default": 1,
+                        "minimum": 1
+                    }
+                }
+            },
+            "VniOrRange": {
+                "type": "object",
+                "description": "A VxLan network ID descriptor that allows a single VNI, or a range of VNIs.",
+                "required": [
+                    "choice"
+                ],
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "vni",
+                            "vni_range"
+                        ]
+                    },
+                    "vni": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 16777215
+                    },
+                    "vni_range": {
+                        "$ref": "#/components/schemas/VniRange"
+                    }
+                }
+            },
+            "L1SettingsProfile": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "description": "Uniquely identifies a layer 1 settings profile",
+                        "type": "string"
+                    },
+                    "link_speed": {
+                        "description": "Link speed",
+                        "type": "string",
+                        "enum": [
+                            "speed_10_gbps",
+                            "speed_25_gbps",
+                            "speed_100_gbps",
+                            "speed_200_gbps",
+                            "speed_400_gbps"
+                        ],
+                        "default": "speed_400_gbps"
+                    },
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "autonegotiation",
+                            "manual"
+                        ],
+                        "default": "autonegotiation"
+                    },
+                    "autonegotiation": {
+                        "$ref": "#/components/schemas/L1SettingsProfile.Autonegotiation"
+                    },
+                    "manual": {
+                        "$ref": "#/components/schemas/L1SettingsProfile.Manual"
+                    },
+                    "annotations": {
+                        "type": "string"
+                    }
+                }
+            },
+            "L1SettingsProfile.Autonegotiation": {
+                "type": "object",
+                "properties": {
+                    "advertise_fec": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "fec_mode": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "reed_solomon",
+                            "firecode"
+                        ],
+                        "default": "reed_solomon"
+                    }
+                }
+            },
+            "L1SettingsProfile.Manual": {
+                "type": "object",
+                "properties": {
+                    "fec_mode": {
+                        "type": "string",
+                        "enum": [
+                            "none",
+                            "reed_solomon",
+                            "firecode"
+                        ],
+                        "default": "reed_solomon"
+                    }
+                }
+            },
+            "IngressPfc": {
+                "type": "object",
+                "description": "Ingress-side PFC configuration for a port.\nEITHER (a) `priorities` to enable + configure PFC TX, OR (b) `clear: true`\nto explicitly disable PFC TX on this port. Mutually exclusive with `ingress_pause`.\nWhen clear is true, the TM service tears down any PPGs allocated for this port\nand resets MAC TX bitmap; the fwding service deletes any PFC_CLASSIFY_TBL\nentries previously installed for this port's traffic.\n",
+                "oneOf": [
+                    {
+                        "required": [
+                            "priorities"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "clear"
+                        ]
+                    }
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "clear": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, disables PFC TX on this port and clears classifier entries.\nMutually exclusive with `priorities`.\n"
+                    },
+                    "priorities": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "items": {
+                            "$ref": "#/components/schemas/IngressPfcPriority"
+                        }
+                    }
+                }
+            },
+            "IngressPfcPriority": {
+                "type": "object",
+                "description": "Per-priority ingress PFC settings. A priority entry uses Tier 1 (priority only),\nTier 2 (friendly threshold knobs), or Tier 3 (raw cells).\nTier 2 (friendly) and Tier 3 (raw cells) are mutually exclusive \u2014 enforced\nby the api-server resolver layer (tm_profiles.py), NOT by this schema.\nThis schema permits both sets of fields; the resolver rejects mixed\ninput with HTTP 400.\n\nClassifier match (independent of tier): `tos` + `mask` define the ternary\nmatch against the outer-IPv4 diffserv byte (`ig_md.encap_diffserv`) used by\n`pfc_classify_tbl` to decide which traffic gets routed to this priority's\nPPG and egress queue. Default `tos=0, mask=255` matches exactly diffserv=0;\ncallers normally override to match their target DSCP pattern (e.g.,\n`tos=16, mask=252` matches DSCP=4 ignoring ECN bits).\n",
+                "required": [
+                    "priority"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 7,
+                        "description": "iCoS priority class (0-7). Drives `INGRESS_COS` + `EGRESS_QID` action\nparams in PFC_CLASSIFY_TBL (api-server enforces them equal at translation),\nwhich in turn drives PPG selection (TM TX side) and egress queue +\n`pfc_cos` honor (TM RX side).\n"
+                    },
+                    "tos": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255,
+                        "default": 0,
+                        "description": "Raw 8-bit outer-IPv4 ToS / DiffServ value to match. Caller's\nresponsibility to choose this in conjunction with `mask`.\n"
+                    },
+                    "mask": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255,
+                        "default": 255,
+                        "description": "Ternary mask for `tos`. 0xFF (255) = exact byte match, 0xFC (252) =\nmatch DSCP ignoring ECN bits, 0xE0 (224) = match top 3 bits (class\nselector range). No validation of `tos & mask == tos`.\n"
+                    },
+                    "upper_threshold_pct": {
+                        "type": "number",
+                        "minimum": 0,
+                        "exclusiveMinimum": true,
+                        "maximum": 100,
+                        "exclusiveMaximum": true,
+                        "description": "PFC fires when PPG buffer is this % of total capacity.\nDefault 50 (Sai-equivalent). OpenAPI 3.0 boolean form for\nstrict-greater-than-zero, strict-less-than-100.\n"
+                    },
+                    "lower_threshold_pct": {
+                        "type": "number",
+                        "minimum": 0,
+                        "exclusiveMinimum": true,
+                        "maximum": 100,
+                        "exclusiveMaximum": true,
+                        "description": "PFC clears when PPG buffer drains to this % of total capacity.\nMust be less than upper_threshold_pct (enforced by resolver).\nDefault 40 (Sai-equivalent).\n"
+                    },
+                    "guaranteed_cells": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "Cells guaranteed to this PPG. Raw-tier override; takes precedence over\nfriendly knobs (which would be rejected if both present on same entry).\n"
+                    },
+                    "skid_cells": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "pool_max_cells": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "hysteresis_cells": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "pool_id": {
+                        "type": "string",
+                        "enum": [
+                            "IG_APP_POOL_0",
+                            "IG_APP_POOL_1",
+                            "IG_APP_POOL_2",
+                            "IG_APP_POOL_3"
+                        ],
+                        "default": "IG_APP_POOL_0"
+                    },
+                    "dynamic_baf": {
+                        "type": "string",
+                        "enum": [
+                            "BAF_DISABLE",
+                            "BAF_1_5",
+                            "BAF_3",
+                            "BAF_6",
+                            "BAF_11",
+                            "BAF_20",
+                            "BAF_33",
+                            "BAF_50",
+                            "BAF_66",
+                            "BAF_80"
+                        ],
+                        "default": "BAF_80"
+                    }
+                }
+            },
+            "EgressPfc": {
+                "type": "object",
+                "description": "Egress-side PFC configuration for a port.\nEITHER (a) `priorities` to enable + configure PFC RX (honor incoming PFC\nframes), OR (b) `clear: true` to explicitly disable PFC RX on this port\n(triggers ClearPfcConfig in TM service: reset queue pfc_cos mappings,\nclear MAC RX bitmap, clear latched scheduler state). Mutually exclusive\nwith `egress_pause`.\n",
+                "oneOf": [
+                    {
+                        "required": [
+                            "priorities"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "clear"
+                        ]
+                    }
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "clear": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, disables PFC RX on this port. Mutually exclusive with `priorities`.\n"
+                    },
+                    "priorities": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "items": {
+                            "$ref": "#/components/schemas/EgressPfcPriority"
+                        }
+                    }
+                }
+            },
+            "EgressPfcPriority": {
+                "type": "object",
+                "description": "Per-priority egress PFC settings. Tier 1 (priority only) / Tier 2 (queue_buffer_us)\n/ Tier 3 (raw cells).\nTier 2 (friendly) and Tier 3 (raw cells) are mutually exclusive \u2014 enforced\nby the api-server resolver layer (tm_profiles.py), NOT by this schema.\nThis schema permits both sets of fields; the resolver rejects mixed\ninput with HTTP 400.\n",
+                "required": [
+                    "priority"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "priority": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 7
+                    },
+                    "queue_buffer_us": {
+                        "type": "number",
+                        "minimum": 0,
+                        "exclusiveMinimum": true,
+                        "description": "Microseconds of guaranteed TX buffer at port line rate. Default 1.0\n(= Sai's 72 cells @ 100G). OpenAPI 3.0 boolean form for\nstrict-greater-than-zero.\n"
+                    },
+                    "guaranteed_cells": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "hysteresis_cells": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 32
+                    },
+                    "pool_id": {
+                        "type": "string",
+                        "enum": [
+                            "EG_APP_POOL_0",
+                            "EG_APP_POOL_1",
+                            "EG_APP_POOL_2",
+                            "EG_APP_POOL_3"
+                        ],
+                        "default": "EG_APP_POOL_0"
+                    },
+                    "dynamic_baf": {
+                        "type": "string",
+                        "enum": [
+                            "BAF_DISABLE",
+                            "BAF_1_5",
+                            "BAF_3",
+                            "BAF_6",
+                            "BAF_11",
+                            "BAF_20",
+                            "BAF_33",
+                            "BAF_50",
+                            "BAF_66",
+                            "BAF_80"
+                        ],
+                        "default": "BAF_33"
+                    }
+                }
+            },
+            "IngressPause": {
+                "type": "object",
+                "description": "Ingress-side 802.3x Global Pause configuration for a port.\nEITHER (a) `enable: true` to turn on Global Pause generation, OR\n(b) `clear: true` to explicitly disable it. Mutually exclusive with\n`ingress_pfc` on the same port \u2014 the TM service's flow-control mode\nfor a port is either 802.1Qbb PFC or 802.3x Global Pause, never both\nat once (see soda-bfs-tm-service pfc_controller.cc\nConfigurePortFlowControl()).\n\nKNOWN BACKEND LIMITATION (UHDCONNECT-423): the underlying\n`PortPfcConfig.enable_global_pause` proto field is a single flag \u2014\nsetting it true arms BOTH the TX (generate) and RX (honor) MAC-level\npause behavior together (`bf_pal_port_flow_control_link_pause_set`\nis called with both `pause_tx=true` and `pause_rx=true`\nunconditionally). There is currently no way to enable one direction\nwithout the other. Setting `ingress_pause.enable: true` alone (with\nno `egress_pause` block) will still cause this port to honor received\n802.3x PAUSE frames as a side effect of the shared backend flag.\n",
+                "oneOf": [
+                    {
+                        "required": [
+                            "enable"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "clear"
+                        ]
+                    }
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "enable": {
+                        "type": "boolean",
+                        "description": "When true, enables 802.3x Global Pause generation (TX) on this\nport. Mutually exclusive with `clear`.\n"
+                    },
+                    "clear": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, disables Global Pause on this port (subject to the\nsame shared-flag limitation described above \u2014 if the paired\ndirection, e.g. `egress_pause`, is still enabled on this port,\nGlobal Pause remains active overall). Mutually exclusive with\n`enable`.\n"
+                    }
+                }
+            },
+            "EgressPause": {
+                "type": "object",
+                "description": "Egress-side 802.3x Global Pause configuration for a port.\nEITHER (a) `enable: true` to turn on Global Pause honor (RX) \u2014 UHD\nstops transmitting on this port while a received PAUSE frame's timer\nis active \u2014 OR (b) `clear: true` to explicitly disable it. Mutually\nexclusive with `egress_pfc` on the same port \u2014 the TM service's\nflow-control mode for a port is either 802.1Qbb PFC or 802.3x Global\nPause, never both at once (see soda-bfs-tm-service pfc_controller.cc\nConfigurePortFlowControl()).\n\nKNOWN BACKEND LIMITATION (UHDCONNECT-423): the underlying\n`PortPfcConfig.enable_global_pause` proto field is a single flag \u2014\nsetting it true arms BOTH the RX (honor) and TX (generate) MAC-level\npause behavior together (`bf_pal_port_flow_control_link_pause_set`\nis called with both `pause_rx=true` and `pause_tx=true`\nunconditionally). There is currently no way to enable one direction\nwithout the other. Setting `egress_pause.enable: true` alone (with\nno `ingress_pause` block) will still cause this port to generate\n802.3x PAUSE frames upstream as a side effect of the shared backend\nflag.\n",
+                "oneOf": [
+                    {
+                        "required": [
+                            "enable"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "clear"
+                        ]
+                    }
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "enable": {
+                        "type": "boolean",
+                        "description": "When true, enables 802.3x Global Pause honor (RX) on this port \u2014\nthis is the fix for UHDCONNECT-423. Mutually exclusive with\n`clear`.\n"
+                    },
+                    "clear": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "When true, disables Global Pause honor on this port (subject to\nthe same shared-flag limitation described above \u2014 if the paired\ndirection, e.g. `ingress_pause`, is still enabled on this port,\nGlobal Pause remains active overall). Mutually exclusive with\n`enable`.\n"
+                    }
+                }
+            },
+            "Port": {
+                "description": "An front-panel Ethernet port or group thereof.",
+                "type": "object",
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "front_panel_port",
+                            "port_group"
+                        ],
+                        "default": "front_panel_port"
+                    },
+                    "front_panel_port": {
+                        "$ref": "#/components/schemas/FrontPanelPort"
+                    },
+                    "port_group": {
+                        "$ref": "#/components/schemas/FrontPanelPortGroup"
+                    },
+                    "name": {
+                        "description": "Unique name of an object. It also serves as the primary key for arrays of objects.",
+                        "type": "string",
+                        "pattern": "^[\\sa-zA-Z0-9-_()><\\[\\]]+$"
+                    }
+                },
+                "required": [
+                    "name"
+                ]
+            },
+            "FrontPanelPort": {
+                "type": "object",
+                "description": "An external front-panel port\nA front-panel port with channel info",
+                "required": [
+                    "layer_1_profile_name",
+                    "front_panel_port"
+                ],
+                "properties": {
+                    "layer_1_profile_name": {
+                        "description": "The name of a Layer 1 configuration to apply to this Port\n\nx-constraint:\n- ../layer1/layer1settings.yaml#/components/schemas/Layer1Settings/properties/name\n",
+                        "type": "string",
+                        "x-constraint": [
+                            "../layer1/layer1settings.yaml#/components/schemas/Layer1Settings/properties/name"
+                        ]
+                    },
+                    "switchover_port": {
+                        "$ref": "#/components/schemas/FrontPanelPort"
+                    },
+                    "mirror_to": {
+                        "type": "string",
+                        "description": "Name of another front_panel_ports[] entry to mirror traffic to. Must match the `name` of a port declared in this config. Mirror is unidirectional; direction controlled by `mirror_type`."
+                    },
+                    "mirror_type": {
+                        "type": "string",
+                        "enum": [
+                            "ingress",
+                            "egress"
+                        ],
+                        "description": "Direction of traffic to mirror when `mirror_to` is set. `ingress` mirrors traffic as it arrives on this port (before any processing). `egress` mirrors traffic as it is actually transmitted out this port (after all processing/encap/decap), reflecting the true wire output. Defaults to `ingress` for backward compatibility."
+                    },
+                    "ingress_pfc": {
+                        "$ref": "#/components/schemas/IngressPfc"
+                    },
+                    "egress_pfc": {
+                        "$ref": "#/components/schemas/EgressPfc"
+                    },
+                    "ingress_pause": {
+                        "$ref": "#/components/schemas/IngressPause"
+                    },
+                    "egress_pause": {
+                        "$ref": "#/components/schemas/EgressPause"
+                    },
+                    "front_panel_port": {
+                        "type": "integer",
+                        "description": "The ordinal integer of the front-panel port to configure",
+                        "minimum": 1,
+                        "maximum": 32
+                    },
+                    "channel": {
+                        "type": "integer",
+                        "description": "The ordinal integer of the channel within the port to configure. This is used to control individual channels within a port, e.g. when used with a breakout cable.",
+                        "minimum": 1,
+                        "maximum": 8,
+                        "default": 1
+                    },
+                    "num_channels": {
+                        "type": "integer",
+                        "description": "The number of channels/lanes to use for this front-panel port.  Omit for a reasonable default. For breakout mode, this value must be specified,  and the range of channels must not overlap with any other range of channels on  the same front-panel port. If num_channels is omitted or set to 0 the UHD will  use a default based on the port speed",
+                        "minimum": 0,
+                        "maximum": 8,
+                        "default": 0
+                    }
+                }
+            },
+            "FrontPanelPortGroup": {
+                "type": "object",
+                "description": "A list of front-panel ports to represent multiple ports with a single port_name. This allows connection types to accept a set of ports instead of a single port, but not all connection types accept groups.\nThe ingress distribution setting specifies how the configuration is to be distributed to the ports. The configuration (e.g. the vlans to route) can be either copied or split equally amongst the ingress ports. Split is the default, as would typically be the case for non-lag port groups, where traffic is unique on each port. Copy is typically used for lag port groups, where traffic might be sent to any port.\nEgress distribution is always split. All egress ports must have link up to avoid a loss of traffic (assuming ingress traffic is uniformly distributed).",
+                "properties": {
+                    "ports": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FrontPanelPort"
+                        }
+                    },
+                    "ingress_distribution": {
+                        "type": "string",
+                        "enum": [
+                            "split",
+                            "copy"
+                        ],
+                        "default": "split"
+                    }
+                }
+            },
+            "ConnectArp": {
+                "description": "Routes ARP packets between two ports. More ports may be supported in the future.",
+                "type": "object",
+                "properties": {
+                    "vlan_endpoint_settings_port1": {
+                        "description": "The VLAN (single or, via two functions[] entries, Q-in-Q) to match/apply on port1 (connection.endpoints[0]) of the passthrough. Optional; absence or `non_vlan` means untagged traffic on this port.",
+                        "$ref": "#/components/schemas/PortVlanSettings"
+                    },
+                    "vlan_endpoint_settings_port2": {
+                        "description": "The VLAN (single or, via two functions[] entries, Q-in-Q) to match/apply on port2 (connection.endpoints[1]) of the passthrough. Optional; absence or `non_vlan` means untagged traffic on this port.",
+                        "$ref": "#/components/schemas/PortVlanSettings"
+                    }
+                }
+            },
+            "ConnectIp": {
+                "description": "Connect IP traffic between two endpoints. Currently only IPv4 is supported, but IPv6 support is planned for future updates.",
+                "type": "object",
+                "properties": {
+                    "protocol": {
+                        "type": "integer",
+                        "description": "The IP protocol ID to match (e.g., 58 for ICMPv6). If 0 (the default), all IP protocols are matched.",
+                        "default": 0,
+                        "minimum": 0,
+                        "maximum": 255
+                    },
+                    "is_ipv4": {
+                        "type": "boolean",
+                        "description": "If true, this connection will only match on IPv4 packets.",
+                        "default": false
+                    },
+                    "is_ipv6": {
+                        "type": "boolean",
+                        "description": "If true, this connection will only match on IPv6 packets.",
+                        "default": false
+                    },
+                    "vlan_endpoint_settings_port1": {
+                        "description": "The VLAN (single or, via two functions[] entries, Q-in-Q) to match/apply on port1 (connection.endpoints[0]) of the passthrough. Optional; absence or `non_vlan` means untagged traffic on this port.",
+                        "$ref": "#/components/schemas/PortVlanSettings"
+                    },
+                    "vlan_endpoint_settings_port2": {
+                        "description": "The VLAN (single or, via two functions[] entries, Q-in-Q) to match/apply on port2 (connection.endpoints[1]) of the passthrough. Optional; absence or `non_vlan` means untagged traffic on this port.",
+                        "$ref": "#/components/schemas/PortVlanSettings"
+                    }
+                }
+            },
+            "ConnectVlanVxlan": {
+                "type": "object",
+                "description": "Reencapsulates VLan traffic to VxLAN traffic between two endpoints. This can be useful when connecting equipment that supports VLAN but not VxLAN to equipment that requires VxLAN.\nOne of the endpoints must be tagged \"vlan\", and the other \"vxlan\". Traffic arriving on the vlan-tagged endpoint is reencapsulated and sent to the vxlan-tagged endpoint using the VLAN ID of the traffic to determine the VNI of the untagged endpoint. Likewise, traffic from the vxlan-tagged endpoint is reencapsulated as VLAN traffic with the VLAN ID for the vlan-tagged endpoint being derived from the VNI of the VxLAN traffic from the vxlan-tagged endpoint.\nIf the traffic received on a vxlan-tagged endpoint arrives on a VLAN (of the outermost Ethernet), the VLAN will be discarded. And the traffic will appear on the VLAN of the vlan-tagged endpoint. If the inner, VxLAN-enclosed, packet is on a VLAN, then that. will become the inner VLAN of the traffic exiting the vlan-tagged endpoint.\nIf the traffic arriving on the vlan-tagged endpoint is Q-in-Q, then the inner VLAN ID becomes the outer VLAN of the VxLAN-encapsulated packet leaving the vxlan-tagged port.\nThe vxlan_settings that are configured as ranges need only specify the start value, in which case the count will be the vlan count of the vlan-tagged endpoint.",
+                "required": [
+                    "vlan_endpoint_settings",
+                    "vxlan_endpoint_settings"
+                ],
+                "properties": {
+                    "vlan_endpoint_settings": {
+                        "$ref": "#/components/schemas/VxlanVlanSettings"
+                    },
+                    "vxlan_endpoint_settings": {
+                        "$ref": "#/components/schemas/VxlanSettings"
+                    }
+                }
+            },
+            "VxlanSettings": {
+                "type": "object",
+                "description": "The properties of a VxLAN endpoint which will be reencapsulated as VLAN traffic on the other (VLAN) endpoint. This requires specifying the VNI or range of VNIs to match with and to be used to populate the VLAN or range of VLANs on the other endpoint.",
+                "required": [
+                    "vni"
+                ],
+                "properties": {
+                    "vni": {
+                        "description": "The VNI of the VxLAN header, or an open-ended range thereof that applies to the associated endpoint.",
+                        "$ref": "#/components/schemas/VniOrRange"
+                    },
+                    "outgoing_vxlan_header": {
+                        "$ref": "#/components/schemas/OutgoingVxlanHeader"
+                    },
+                    "protocols": {
+                        "$ref": "#/components/schemas/ProtocolFilter"
+                    },
+                    "routing_method": {
+                        "type": "string",
+                        "enum": [
+                            "vni_routing",
+                            "ip_routing",
+                            "mac_routing"
+                        ],
+                        "default": "vni_routing"
+                    },
+                    "ip_routing": {
+                        "$ref": "#/components/schemas/VxlanIpRoutingSettings"
+                    },
+                    "mac_routing": {
+                        "$ref": "#/components/schemas/VxlanMacRoutingSettings"
+                    },
+                    "vni_routing": {
+                        "$ref": "#/components/schemas/ChoiceNone"
+                    },
+                    "protocol_id": {
+                        "type": "integer",
+                        "description": "(Optional) IP protocol ID to filter on (e.g., 6=TCP, 17=UDP, 1=ICMP). If specified along with 'protocols', this field takes precedence. Use with src_port and/or dst_port for L4 filtering.",
+                        "minimum": 0,
+                        "maximum": 255
+                    },
+                    "src_port": {
+                        "type": "integer",
+                        "description": "(Optional) L4 source port to filter on. Only applies when protocol_id is TCP(6) or UDP(17). If specified, only packets with matching source port are processed.",
+                        "minimum": 0,
+                        "maximum": 65535
+                    },
+                    "dst_port": {
+                        "type": "integer",
+                        "description": "(Optional) L4 destination port to filter on. Only applies when protocol_id is TCP(6) or UDP(17). If specified, only packets with matching destination port are processed.",
+                        "minimum": 0,
+                        "maximum": 65535
+                    }
+                }
+            },
+            "ProtocolFilter": {
+                "type": "object",
+                "description": "Filters to accept or reject traffic based on the inner VxLAN packet. If both lists are empty specified, then all protocols are accepted. Otherwise only one list may be specified.",
+                "properties": {
+                    "accept": {
+                        "type": "array",
+                        "description": "A list of protocols to accept or reject from the inner VxLAN packet. The protocols are not from any specific layer of the stack. For example BGP runs on TCP, so if tcp is specified, then there is no point in specifying bgp.",
+                        "items": {
+                            "type": "string",
+                            "pattern": "^(icmp)|(bgp)|(tcp(:[0-9]+)?)|(udp(:[0-9]+)?))$"
+                        }
+                    },
+                    "reject": {
+                        "type": "array",
+                        "description": "A list of protocols to accept or reject from the inner VxLAN packet. The protocols are not from any specific layer of the stack. For example BGP runs on TCP, so if tcp is specified, then there is no point in specifying bgp.",
+                        "items": {
+                            "type": "string",
+                            "pattern": "^(icmp)|(bgp)|(tcp(:[0-9]+)?)|(udp(:[0-9]+)?))$"
+                        }
+                    }
+                }
+            },
+            "VxlanVlanSettings": {
+                "type": "object",
+                "description": "The properties of a VLAN endpoint which will be reencapsulated as VxLAN traffic on the VxLAN endpoint. Extends the shared common/vlan.yaml VlanSettings base (which supplies `vlan`) with VXLAN-encap-specific routing/protocol-filter fields.\nMinimal shared base for per-function VLAN settings. Encap functions (connect_vlan_vxlan / connect_vlan_nvgre) extend this with their own routing/protocol-filter fields (see VxlanVlanSettings / NvgreVlanSettings).",
+                "properties": {
+                    "routing_method": {
+                        "type": "string",
+                        "enum": [
+                            "vlan_routing",
+                            "ip_routing",
+                            "mac_routing"
+                        ],
+                        "default": "vlan_routing"
+                    },
+                    "ip_routing": {
+                        "$ref": "#/components/schemas/VlanIpRoutingSettings"
+                    },
+                    "mac_routing": {
+                        "$ref": "#/components/schemas/VlanMacRoutingSettings"
+                    },
+                    "vlan_routing": {
+                        "$ref": "#/components/schemas/ChoiceNone"
+                    },
+                    "protocol_id": {
+                        "type": "integer",
+                        "description": "(Optional) IP protocol ID to filter on (e.g., 6=TCP, 17=UDP, 1=ICMP). Only packets matching this protocol are encapsulated. Use with src_port and/or dst_port for L4 filtering.",
+                        "minimum": 0,
+                        "maximum": 255
+                    },
+                    "src_port": {
+                        "type": "integer",
+                        "description": "(Optional) L4 source port to filter on. Only applies when protocol_id is TCP(6) or UDP(17). If specified, only packets with matching source port are encapsulated.",
+                        "minimum": 0,
+                        "maximum": 65535
+                    },
+                    "dst_port": {
+                        "type": "integer",
+                        "description": "(Optional) L4 destination port to filter on. Only applies when protocol_id is TCP(6) or UDP(17). If specified, only packets with matching destination port are encapsulated.",
+                        "minimum": 0,
+                        "maximum": 65535
+                    },
+                    "vlan": {
+                        "description": "The VLAN ID (or range) associated with this function.",
+                        "$ref": "#/components/schemas/VlanIdOption"
+                    }
+                }
+            },
+            "VxlanIpRoutingSettings": {
+                "type": "object",
+                "description": "The properties for representing the ip routing options w.r.t VXLAN endpoint which will be used for configuring the destination IPs",
+                "properties": {
+                    "destination_ips": {
+                        "description": "The (optional) destination IP address(es) for the incoming VXLAN packets. Required if the VXLAN config specifies ip_routing.",
+                        "$ref": "#/components/schemas/IpAddressOrRange"
+                    }
+                }
+            },
+            "VlanIpRoutingSettings": {
+                "type": "object",
+                "description": "The properties for representing the ip routing options w.r.t VLAN endpoint which will be used for configuring the source IPs",
+                "properties": {
+                    "source_ips": {
+                        "description": "The (optional) source IP address(es) for the incoming VxLAN packets. Required if the VxLAN config specifies ip_routing.",
+                        "$ref": "#/components/schemas/IpAddressOrRange"
+                    }
+                }
+            },
+            "VxlanMacRoutingSettings": {
+                "type": "object",
+                "description": "The properties for representing the mac routing options w.r.t VXLAN endpoint which will be used for configuring the destination Macs",
+                "properties": {
+                    "destination_macs": {
+                        "description": "The (optional) destination Mac address(es) for the incoming VXLAN packets. Required if the VXLAN config specifies mac_routing.",
+                        "$ref": "#/components/schemas/MacAddressOrRange"
+                    }
+                }
+            },
+            "VlanMacRoutingSettings": {
+                "type": "object",
+                "description": "The properties for representing the mac routing options w.r.t VLAN endpoint which will be used for configuring the source Macs",
+                "properties": {
+                    "source_macs": {
+                        "description": "The (optional) source Mac address(es) for the incoming VxLAN packets. Required if the VxLAN config specifies mac_routing.",
+                        "$ref": "#/components/schemas/MacAddressOrRange"
+                    }
+                }
+            },
+            "OutgoingVxlanHeader": {
+                "type": "object",
+                "description": "The Ethernet and IP headers to populate the outer VxLAN envelope. These ranges are mapped from the VLAN range for the endpoint in the same way as tunnel IDs.\nUse src_ip and dst_ip with choice \"ipv4\" or \"ipv4_range\" for an IPv4 underlay, or \"ipv6\" or \"ipv6_range\" for an IPv6 underlay. Both src_ip and dst_ip must use the same address family.",
+                "required": [
+                    "src_mac",
+                    "src_ip",
+                    "dst_mac",
+                    "dst_ip"
+                ],
+                "properties": {
+                    "src_mac": {
+                        "description": "The source MAC address for the injected Ethernet header, or an open-ended range thereof that maps to the src_vlan range.",
+                        "$ref": "#/components/schemas/MacAddressOrRange"
+                    },
+                    "src_ip": {
+                        "description": "The source IP address for the injected IP header, or an open-ended range thereof that maps to the src_vlan range. Use choice \"ipv4\"/\"ipv4_range\" for IPv4 underlay or \"ipv6\"/\"ipv6_range\" for IPv6 underlay.",
+                        "$ref": "#/components/schemas/IpAddressOrRange"
+                    },
+                    "dst_mac": {
+                        "type": "string",
+                        "description": "The next-hop MAC address for the injected Ethernet header, or an open-ended range thereof that maps to the src_vlan range.",
+                        "$ref": "#/components/schemas/MacAddressOrRange"
+                    },
+                    "dst_ip": {
+                        "type": "string",
+                        "description": "The IP address for the injected IP header or an open-ended range thereof that maps to the src_vlan range. Use choice \"ipv4\"/\"ipv4_range\" for IPv4 underlay or \"ipv6\"/\"ipv6_range\" for IPv6 underlay.",
+                        "$ref": "#/components/schemas/IpAddressOrRange"
+                    },
+                    "tos": {
+                        "type": "integer",
+                        "description": "(Optional) The TOS/DSCP value to set in the IP header of the outer VxLAN envelope. If not specified, the value will be set to 0. For an IPv6 underlay this sets the IPv6 Traffic Class byte.",
+                        "minimum": 0,
+                        "maximum": 255,
+                        "default": 0
+                    },
+                    "udp_src_port": {
+                        "type": "integer",
+                        "description": "The source UDP port for the VxLAN header. The default value is 0, If field is not provided by user than source port is calculated as a hash of the following fields: - For IPv4: inner source IP address, inner destination IP address, and protocol. - For IPv6: inner source IP address, inner destination IP address, and next header.",
+                        "minimum": 0,
+                        "maximum": 65535,
+                        "default": 0
+                    },
+                    "udp_dst_port": {
+                        "type": "integer",
+                        "description": "The destination UDP port for the VxLAN header. The default value is 4789.",
+                        "minimum": 0,
+                        "maximum": 65535,
+                        "default": 4789
+                    }
+                }
+            },
+            "ConnectVlanNvgre": {
+                "type": "object",
+                "description": "Reencapsulates VLan traffic to NVGRE traffic between two endpoints. This can be useful when connecting equipment that supports VLAN but not NVGRE to equipment that requires NVGRE.\nOne of the endpoints must be tagged \"vlan\", and the other \"nvgre\". Traffic arriving on the vlan-tagged endpoint is reencapsulated and sent to the NVGRE-tagged endpoint using the VLAN ID of the traffic to determine the VSID of the untagged endpoint. Likewise, traffic from the nvgre-tagged endpoint is reencapsulated as VLAN traffic with the VLAN ID for the vlan-tagged endpoint being derived from the VSID of the NVGRE traffic from the NVGRE-tagged endpoint.\nIf the traffic received on a NVGRE-tagged endpoint arrives on a VLAN (of the outermost Ethernet), the VLAN will be discarded. And the traffic will appear on the VLAN of the vlan-tagged endpoint. If the inner, NVGRE-enclosed, packet is on a VLAN, then that will become the inner VLAN of the traffic exiting the vlan-tagged endpoint.\nIf the traffic arriving on the vlan-tagged endpoint is Q-in-Q, then the inner VLAN ID becomes the outer VLAN of the NVGRE-encapsulated packet leaving the nvgre-tagged port.\nThe nvgre_settings that are configured as ranges need only specify the start value, in which case the count will be the vlan count of the vlan-tagged endpoint.",
+                "required": [
+                    "vlan_endpoint_settings",
+                    "nvgre_endpoint_settings"
+                ],
+                "properties": {
+                    "vlan_endpoint_settings": {
+                        "$ref": "#/components/schemas/NvgreVlanSettings"
+                    },
+                    "nvgre_endpoint_settings": {
+                        "$ref": "#/components/schemas/NvgreSettings"
+                    }
+                }
+            },
+            "NvgreIpRoutingSettings": {
+                "type": "object",
+                "description": "The properties for representing the ip routing options w.r.t NVGRE. endpoint which will be used for configuring the destination IPs",
+                "properties": {
+                    "destination_ips": {
+                        "description": "The (optional) destination IP address(es) for the incoming NVGRE packets. Required if the NVGRE config specifies ip_routing.",
+                        "$ref": "#/components/schemas/IpAddressOrRange"
+                    }
+                }
+            },
+            "NvgreMacRoutingSettings": {
+                "type": "object",
+                "description": "The properties for representing the mac routing options w.r.t NVGRE. endpoint which will be used for configuring the destination Macs",
+                "properties": {
+                    "destination_macs": {
+                        "description": "The (optional) destination Mac address(es) for the incoming NVGRE packets. Required if the NVGRE config specifies mac_routing.",
+                        "$ref": "#/components/schemas/MacAddressOrRange"
+                    }
+                }
+            },
+            "NvgreSettings": {
+                "type": "object",
+                "description": "The properties of a Nvgre endpoint which will be reencapsulated as VLAN traffic on the other (VLAN) endpoint. This requires specifying the VSID or range of VSIDs to match with and to be used to populate the VLAN or range of VLANs on the other endpoint.",
+                "required": [
+                    "vsid"
+                ],
+                "properties": {
+                    "vsid": {
+                        "description": "The VSID of the NVGRE header, or an open-ended range thereof that applies to the associated endpoint.",
+                        "$ref": "#/components/schemas/VsidOrRange"
+                    },
+                    "outgoing_nvgre_header": {
+                        "$ref": "#/components/schemas/OutgoingNvgreHeader"
+                    },
+                    "protocols": {
+                        "$ref": "#/components/schemas/ProtocolFilter"
+                    },
+                    "routing_method": {
+                        "type": "string",
+                        "enum": [
+                            "vsid_routing",
+                            "ip_routing",
+                            "mac_routing"
+                        ],
+                        "default": "vsid_routing"
+                    },
+                    "ip_routing": {
+                        "$ref": "#/components/schemas/NvgreIpRoutingSettings"
+                    },
+                    "mac_routing": {
+                        "$ref": "#/components/schemas/NvgreMacRoutingSettings"
+                    },
+                    "vsid_routing": {
+                        "$ref": "#/components/schemas/ChoiceNone"
+                    },
+                    "protocol_id": {
+                        "type": "integer",
+                        "description": "(Optional) IP protocol ID to filter on (e.g., 6=TCP, 17=UDP, 1=ICMP). If specified along with 'protocols', this field takes precedence. Use with src_port and/or dst_port for L4 filtering.",
+                        "minimum": 0,
+                        "maximum": 255
+                    },
+                    "src_port": {
+                        "type": "integer",
+                        "description": "(Optional) L4 source port to filter on. Only applies when protocol_id is TCP(6) or UDP(17). If specified, only packets with matching source port are processed.",
+                        "minimum": 0,
+                        "maximum": 65535
+                    },
+                    "dst_port": {
+                        "type": "integer",
+                        "description": "(Optional) L4 destination port to filter on. Only applies when protocol_id is TCP(6) or UDP(17). If specified, only packets with matching destination port are processed.",
+                        "minimum": 0,
+                        "maximum": 65535
+                    }
+                }
+            },
+            "NvgreVlanSettings": {
+                "type": "object",
+                "description": "The properties of a VLAN endpoint which will be reencapsulated as NVGRE traffic on the NVGRE endpoint. Extends the shared common/vlan.yaml VlanSettings base (which supplies `vlan`) with NVGRE-encap-specific routing/protocol-filter fields.\nMinimal shared base for per-function VLAN settings. Encap functions (connect_vlan_vxlan / connect_vlan_nvgre) extend this with their own routing/protocol-filter fields (see VxlanVlanSettings / NvgreVlanSettings).",
+                "properties": {
+                    "routing_method": {
+                        "type": "string",
+                        "enum": [
+                            "vni_routing",
+                            "ip_routing",
+                            "mac_routing"
+                        ],
+                        "default": "vni_routing"
+                    },
+                    "ip_routing": {
+                        "$ref": "#/components/schemas/VlanIpRoutingSettings"
+                    },
+                    "mac_routing": {
+                        "$ref": "#/components/schemas/VlanMacRoutingSettings"
+                    },
+                    "vni_routing": {
+                        "$ref": "#/components/schemas/ChoiceNone"
+                    },
+                    "protocol_id": {
+                        "type": "integer",
+                        "description": "(Optional) IP protocol ID to filter on (e.g., 6=TCP, 17=UDP, 1=ICMP). Only packets matching this protocol are encapsulated. Use with src_port and/or dst_port for L4 filtering.",
+                        "minimum": 0,
+                        "maximum": 255
+                    },
+                    "src_port": {
+                        "type": "integer",
+                        "description": "(Optional) L4 source port to filter on. Only applies when protocol_id is TCP(6) or UDP(17). If specified, only packets with matching source port are encapsulated.",
+                        "minimum": 0,
+                        "maximum": 65535
+                    },
+                    "dst_port": {
+                        "type": "integer",
+                        "description": "(Optional) L4 destination port to filter on. Only applies when protocol_id is TCP(6) or UDP(17). If specified, only packets with matching destination port are encapsulated.",
+                        "minimum": 0,
+                        "maximum": 65535
+                    },
+                    "vlan": {
+                        "description": "The VLAN ID (or range) associated with this function.",
+                        "$ref": "#/components/schemas/VlanIdOption"
+                    }
+                }
+            },
+            "OutgoingNvgreHeader": {
+                "type": "object",
+                "description": "The Ethernet and IP headers to populate the outer NVGRE envelope. These ranges are mapped from the VLAN range for the endpoint in the same way as tunnel IDs.\nUse src_ip and dst_ip with choice \"ipv4\" or \"ipv4_range\" for an IPv4 underlay, or \"ipv6\" or \"ipv6_range\" for an IPv6 underlay. Both src_ip and dst_ip must use the same address family.",
+                "required": [
+                    "src_mac",
+                    "src_ip",
+                    "dst_mac",
+                    "dst_ip"
+                ],
+                "properties": {
+                    "src_mac": {
+                        "type": "string",
+                        "description": "The source MAC address for the injected Ethernet header, or an open-ended range thereof that maps to the src_vlan range.",
+                        "$ref": "#/components/schemas/MacAddressOrRange"
+                    },
+                    "src_ip": {
+                        "type": "string",
+                        "description": "The source IP address for the injected IP header, or an open-ended range thereof that maps to the src_vlan range. Use choice \"ipv4\"/\"ipv4_range\" for IPv4 underlay or \"ipv6\"/\"ipv6_range\" for IPv6 underlay.",
+                        "$ref": "#/components/schemas/IpAddressOrRange"
+                    },
+                    "dst_mac": {
+                        "type": "string",
+                        "description": "The next-hop MAC address for the injected Ethernet header, or an open-ended range thereof that maps to the src_vlan range.",
+                        "$ref": "#/components/schemas/MacAddressOrRange"
+                    },
+                    "dst_ip": {
+                        "type": "string",
+                        "description": "The IP address for the injected IP header or an open-ended range thereof that maps to the src_vlan range. Use choice \"ipv4\"/\"ipv4_range\" for IPv4 underlay or \"ipv6\"/\"ipv6_range\" for IPv6 underlay.",
+                        "$ref": "#/components/schemas/IpAddressOrRange"
+                    },
+                    "flow_id": {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "The flow ID for the injected NVGRE header, or an open-ended range thereof that maps to the src_vlan range."
+                    },
+                    "tos": {
+                        "type": "integer",
+                        "description": "(Optional) The TOS/DSCP value to set in the IP header of the outer NVGRE envelope. If not specified, the value will be set to 0. For an IPv6 underlay this sets the IPv6 Traffic Class byte.",
+                        "minimum": 0,
+                        "maximum": 255,
+                        "default": 0
+                    }
+                }
+            },
+            "Connection": {
+                "description": "A two-or-more-way connection between Ethernet ports that optionally transforms the data (i.e. a \"bump in the wire\").\nMultiple connections can connect to any given port, but the transforms for source ports should be uniquely specified to avoid undefined behavior. For example, a single source port might use two ARP  connections going to two different destination ports. In that case one connection could route VLAN ARPs and the other could route non_VLAN ARPs (or a different range of ARPs) so that each  would carries unique traffic.\nAll connection types can perform encap/decap of VLAN traffic bidirectionally. Some connection types can perform encap/decap to/from other protocols as well. The term tunnel ID in the following descriptions is used to describe either VLAN IDs or the tunnel identifiers of other protocols (e.g. VNIs for VxLAN).\nTraffic arriving on an endpoint with a tunnel IDs outside of the ID or range specified in an endpoint's configuration are ignored. Additional connections may be added with non-overlapping sets of tunnel IDs to route and/or process different sets differently.\nWhen an endpoint is specified with a single tunnel ID, and a packet arrives at that endpoint with a matching ID, then the packet is routed to the opposite endpoint(s) and receives the tunnel ID (or first ID of a range) of the opposite endpoint.\nWhen an endpoint is specified with a range of tunnel IDs, and a packet arrives that endpoint with a matching ID, then the offset from the start of that endpoint's range. The packet is  routed to the opposite endpoint(s) and receives the tunnel ID from the opposite endpoint's  tunnel ID or range. If the opposite endpoint is a single ID, then, of course, that is the outgoing tunnel ID. If it is a range, however, then the offset from the incoming endpoint is added to the start of the outgoing endpoint's range. If only one of the endpoints has a count, then that count is used for both. If two endpoints have a different count, however, then the outgoing tunnel ID is according to the following equation:\ntunnel_id_out = tunnel_id_in + ( input_offset modulo range_count_out )\nSo if the incoming range is less than the outgoing range count, then the result is the same as if the counts were the same. But if the it is the outgoing range count is smaller, then the incoming ranges are wrapped around. ",
+                "type": "object",
+                "required": [
+                    "endpoints",
+                    "functions",
+                    "name"
+                ],
+                "properties": {
+                    "endpoints": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Endpoint"
+                        }
+                    },
+                    "functions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Function"
+                        }
+                    },
+                    "name": {
+                        "description": "Unique name of an object. It also serves as the primary key for arrays of objects.",
+                        "type": "string",
+                        "pattern": "^[\\sa-zA-Z0-9-_()><\\[\\]]+$"
+                    }
+                }
+            },
+            "Endpoint": {
+                "type": "object",
+                "description": "Elements of ingress and/or egress for a connection. Consists of a single front-panel port and a set of tags that some connections might require to identify specific endpoints. VLAN placement (single or double) is configured per-function via that function's own settings block (e.g. `vlan_endpoint_settings` for encap, `vlan_endpoint_settings_port1`/ `vlan_endpoint_settings_port2` for passthrough), not on the endpoint itself.",
+                "properties": {
+                    "port_name": {
+                        "type": "string",
+                        "description": "The name of the port used by this endpoint.\n\nx-constraint:\n- /components/schemas/Port/properties/name\n",
+                        "x-constraint": [
+                            "/components/schemas/Port/properties/name"
+                        ]
+                    },
+                    "tags": {
+                        "type": "array",
+                        "description": "A list of tags (strings) to distinguish this endpoint from others. For example used by vxlan_settings to identify applicable endpoints.",
+                        "items": {
+                            "type": "string",
+                            "pattern": "^[\\sa-zA-Z0-9-_()><\\[\\]]+$"
+                        },
+                        "default": []
+                    }
+                }
+            },
+            "Function": {
+                "type": "object",
+                "description": "One of a list of functions to be applied to a connection's endpoints",
+                "properties": {
+                    "choice": {
+                        "type": "string",
+                        "enum": [
+                            "connect_ip",
+                            "connect_arp",
+                            "connect_vlan_vxlan",
+                            "connect_vlan_nvgre",
+                            "connect_ethernet"
+                        ]
+                    },
+                    "connect_ip": {
+                        "$ref": "#/components/schemas/ConnectIp"
+                    },
+                    "connect_arp": {
+                        "$ref": "#/components/schemas/ConnectArp"
+                    },
+                    "connect_vlan_vxlan": {
+                        "$ref": "#/components/schemas/ConnectVlanVxlan"
+                    },
+                    "connect_vlan_nvgre": {
+                        "$ref": "#/components/schemas/ConnectVlanNvgre"
+                    },
+                    "connect_ethernet": {
+                        "$ref": "#/components/schemas/ConnectEthernet"
+                    }
+                }
+            },
+            "ConnectEthernet": {
+                "type": "object",
+                "description": "Connect Ethernet packets between two endpoints.",
+                "properties": {
+                    "ethertypes": {
+                        "type": "array",
+                        "description": "A list of Ethernet types. An empty list means allow all ethertypes.",
+                        "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 65535,
+                            "default": 0
+                        }
+                    },
+                    "vlan_endpoint_settings_port1": {
+                        "description": "The VLAN (single or, via two functions[] entries, Q-in-Q) to match/apply on port1 (connection.endpoints[0]) of the passthrough. Optional; absence or `non_vlan` means untagged traffic on this port.",
+                        "$ref": "#/components/schemas/PortVlanSettings"
+                    },
+                    "vlan_endpoint_settings_port2": {
+                        "description": "The VLAN (single or, via two functions[] entries, Q-in-Q) to match/apply on port2 (connection.endpoints[1]) of the passthrough. Optional; absence or `non_vlan` means untagged traffic on this port.",
+                        "$ref": "#/components/schemas/PortVlanSettings"
+                    },
+                    "dst_mac_endpoint_settings_port1": {
+                        "description": "Optional destination MAC address(es) reachable on port1 (connection.endpoints[0]). Mutually exclusive with vlan_endpoint_settings_port1/port2 anywhere in this connection (see validation below). Absent means dst_mac routing is not active on this port, and this connection's traffic passes through unrestricted (subject only to ethertypes, if set). When present, this is RESTRICTIVE, not additive: only traffic whose destination MAC matches one of the configured address(es) is forwarded on this port -- all other traffic (including any not matching another dst_mac_endpoint_settings_* entry) is dropped. The generic ingress-port passthrough entries are not installed for this connection in that case.",
+                        "$ref": "#/components/schemas/PortDstMacSettings"
+                    },
+                    "dst_mac_endpoint_settings_port2": {
+                        "description": "Optional destination MAC address(es) reachable on port2 (connection.endpoints[1]). See dst_mac_endpoint_settings_port1.",
+                        "$ref": "#/components/schemas/PortDstMacSettings"
+                    }
+                }
+            },
+            "PortDstMacSettings": {
+                "type": "object",
+                "description": "Per-port destination-MAC-routing settings for connect_ethernet (dst_mac_endpoint_settings_port1/_port2). NOT to be confused with the unrelated, pre-existing \"mac_routing\" routing_method selector under connect_vlan_vxlan/connect_vlan_nvgre (VxlanMacRoutingSettings / VlanMacRoutingSettings) -- that is a VLAN/VNI-selection mechanism keyed off src/dst MAC. This PortDstMacSettings is a completely separate concept: a per-port ternary DESTINATION-MAC match added directly to connect_ethernet's passthrough table (see UHDCONNECT-429). Named `dst_mac` explicitly (rather than just `mac`) because this feature always matches destination MAC -- never source MAC -- and the field name should make that unambiguous to API consumers.",
+                "properties": {
+                    "dst_mac": {
+                        "$ref": "#/components/schemas/MacAddressOrRange"
+                    }
+                }
+            },
+            "Config": {
+                "description": "A container for all models that are part of the configuration.",
+                "type": "object",
+                "properties": {
+                    "profiles": {
+                        "$ref": "#/components/schemas/Profiles"
+                    },
+                    "front_panel_ports": {
+                        "description": "The ports to be interconnected.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Port"
+                        }
+                    },
+                    "connections": {
+                        "description": "A two-or-more-way protocol-specific connection between Ethernet endpoints  that optionally transforms the data along the way. Multiple connections can attach to a single port/endpoint, but the connections should be mutually exclusive. For example, a single source endpoint might use two ARP  connections going to two different destination endpoint. In that case one connection could route VLAN ARPs and the other could route non_VLAN ARPS (or a different range of VLAN IDs) so that each  connection carries unique traffic.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Connection"
+                        }
+                    }
+                }
+            },
+            "Profiles": {
+                "type": "object",
+                "description": "Profiles are reusable settings that can be referenced by name",
+                "properties": {
+                    "layer_1_profiles": {
+                        "description": "A list of available layer1 settings that can be applied to ports.",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/L1SettingsProfile"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "openapi": "3.0.3",
+    "info": {
+        "title": "UHD Connect API",
+        "description": "UHD Connect API for controlling data paths and protocol conversions.",
+        "version": "0.0.1",
+        "license": {
+            "name": "Keysight Proprietary"
+        }
+    },
+    "servers": [
+        {
+            "url": "https://{hostname}:{port}/{basePath}",
+            "variables": {
+                "hostname": {
+                    "default": "0.0.0.0"
+                },
+                "port": {
+                    "default": "443"
+                },
+                "basePath": {
+                    "default": "connect/api/v1"
+                }
+            }
+        }
+    ],
+    "paths": {
+        "/config": {
+            "put": {
+                "tags": [
+                    "Configuration"
+                ],
+                "operationId": "set_config",
+                "description": "Specifies the UHD Connect configuration.",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Config"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "400": {
+                        "description": "error 4xx",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.Details"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error 5xx",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.Details"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Success with possible warnings",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Warning.Details"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "Configuration"
+                ],
+                "operationId": "get_config",
+                "responses": {
+                    "200": {
+                        "description": "Retrieves the UHD Connect configuration.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Config"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "error 4xx",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.Details"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "error 5xx",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error.Details"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

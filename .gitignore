@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+tools/node_modules/
+
+# Playwright / browser downloads
+tools/.browsers/
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

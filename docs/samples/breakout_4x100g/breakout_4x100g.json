@@ -1,0 +1,55 @@
+{
+  "profiles": {
+    "layer_1_profiles": [
+      {
+        "name": "manual_100g_none",
+        "choice": "manual",
+        "link_speed": "speed_100_gbps",
+        "manual": { "fec_mode": "none" }
+      }
+    ]
+  },
+  "front_panel_ports": [
+    {
+      "name": "breakout_100g_sub1",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 1,
+        "channel": 1,
+        "num_channels": 2,
+        "layer_1_profile_name": "manual_100g_none"
+      }
+    },
+    {
+      "name": "breakout_100g_sub2",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 1,
+        "channel": 3,
+        "num_channels": 2,
+        "layer_1_profile_name": "manual_100g_none"
+      }
+    },
+    {
+      "name": "breakout_100g_sub3",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 1,
+        "channel": 5,
+        "num_channels": 2,
+        "layer_1_profile_name": "manual_100g_none"
+      }
+    },
+    {
+      "name": "breakout_100g_sub4",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 1,
+        "channel": 7,
+        "num_channels": 2,
+        "layer_1_profile_name": "manual_100g_none"
+      }
+    }
+  ],
+  "connections": []
+}

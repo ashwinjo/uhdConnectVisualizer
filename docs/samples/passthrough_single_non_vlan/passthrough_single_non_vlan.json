@@ -1,0 +1,55 @@
+{
+  "profiles": {
+    "layer_1_profiles": [
+      {
+        "name": "manual_400g_rs",
+        "choice": "manual",
+        "link_speed": "speed_400_gbps",
+        "manual": { "fec_mode": "reed_solomon" }
+      }
+    ]
+  },
+  "front_panel_ports": [
+    {
+      "name": "scenario_non_vlan_ingress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 25,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    },
+    {
+      "name": "scenario_non_vlan_egress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 26,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "name": "Single VLAN passthrough, one port untagged",
+      "endpoints": [
+        { "port_name": "scenario_non_vlan_ingress" },
+        { "port_name": "scenario_non_vlan_egress" }
+      ],
+      "functions": [
+        {
+          "choice": "connect_ethernet",
+          "connect_ethernet": {
+            "ethertypes": [65535],
+            "vlan_endpoint_settings_port1": {
+              "vlan": { "choice": "vlan", "vlan": 101 }
+            },
+            "vlan_endpoint_settings_port2": {
+              "vlan": { "choice": "non_vlan" }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

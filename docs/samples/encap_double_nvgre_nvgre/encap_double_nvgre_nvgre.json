@@ -1,0 +1,129 @@
+{
+  "profiles": {
+    "layer_1_profiles": [
+      {
+        "name": "manual_400g_rs",
+        "choice": "manual",
+        "link_speed": "speed_400_gbps",
+        "manual": {
+          "fec_mode": "reed_solomon"
+        }
+      }
+    ]
+  },
+  "front_panel_ports": [
+    {
+      "name": "scenario1_ingress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 25,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    },
+    {
+      "name": "scenario1_egress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 26,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "name": "Phase3 - Double encap VLAN to NVGRE-NVGRE",
+      "endpoints": [
+        {
+          "port_name": "scenario1_ingress",
+          "tags": [
+            "vlan",
+            "vlan"
+          ]
+        },
+        {
+          "port_name": "scenario1_egress",
+          "tags": [
+            "nvgre",
+            "nvgre"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "choice": "connect_vlan_nvgre",
+          "connect_vlan_nvgre": {
+            "vlan_endpoint_settings": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 301
+              }
+            },
+            "nvgre_endpoint_settings": {
+              "vsid": {
+                "choice": "vsid",
+                "vsid": 10001
+              },
+              "outgoing_nvgre_header": {
+                "src_mac": {
+                  "choice": "mac",
+                  "mac": "80:09:02:01:00:07"
+                },
+                "dst_mac": {
+                  "choice": "mac",
+                  "mac": "00:50:f2:88:00:06"
+                },
+                "src_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.7.0.1"
+                },
+                "dst_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.0.0.7"
+                },
+                "flow_id": 1
+              }
+            }
+          }
+        },
+        {
+          "choice": "connect_vlan_nvgre",
+          "connect_vlan_nvgre": {
+            "vlan_endpoint_settings": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 302
+              }
+            },
+            "nvgre_endpoint_settings": {
+              "vsid": {
+                "choice": "vsid",
+                "vsid": 10002
+              },
+              "outgoing_nvgre_header": {
+                "src_mac": {
+                  "choice": "mac",
+                  "mac": "80:09:02:01:00:08"
+                },
+                "dst_mac": {
+                  "choice": "mac",
+                  "mac": "00:50:f2:88:00:07"
+                },
+                "src_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.8.0.1"
+                },
+                "dst_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.0.0.8"
+                },
+                "flow_id": 2
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

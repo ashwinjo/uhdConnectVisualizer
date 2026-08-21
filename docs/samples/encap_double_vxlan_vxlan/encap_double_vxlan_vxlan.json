@@ -1,0 +1,131 @@
+{
+  "profiles": {
+    "layer_1_profiles": [
+      {
+        "name": "manual_400g_rs",
+        "choice": "manual",
+        "link_speed": "speed_400_gbps",
+        "manual": {
+          "fec_mode": "reed_solomon"
+        }
+      }
+    ]
+  },
+  "front_panel_ports": [
+    {
+      "name": "scenario3_ingress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 25,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    },
+    {
+      "name": "scenario3_egress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 26,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "name": "Scenario 3 - VLAN to VXLAN-VXLAN",
+      "endpoints": [
+        {
+          "port_name": "scenario3_ingress",
+          "tags": [
+            "vlan",
+            "vlan"
+          ]
+        },
+        {
+          "port_name": "scenario3_egress",
+          "tags": [
+            "vxlan",
+            "vxlan"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "choice": "connect_vlan_vxlan",
+          "connect_vlan_vxlan": {
+            "vlan_endpoint_settings": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 201
+              }
+            },
+            "vxlan_endpoint_settings": {
+              "vni": {
+                "choice": "vni",
+                "vni": 9001
+              },
+              "protocols": {},
+              "outgoing_vxlan_header": {
+                "src_mac": {
+                  "choice": "mac",
+                  "mac": "80:09:02:01:00:04"
+                },
+                "dst_mac": {
+                  "choice": "mac",
+                  "mac": "00:50:f2:88:00:03"
+                },
+                "src_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.5.0.1"
+                },
+                "dst_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.0.0.5"
+                },
+                "udp_dst_port": 4789
+              }
+            }
+          }
+        },
+        {
+          "choice": "connect_vlan_vxlan",
+          "connect_vlan_vxlan": {
+            "vlan_endpoint_settings": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 202
+              }
+            },
+            "vxlan_endpoint_settings": {
+              "vni": {
+                "choice": "vni",
+                "vni": 9002
+              },
+              "protocols": {},
+              "outgoing_vxlan_header": {
+                "src_mac": {
+                  "choice": "mac",
+                  "mac": "80:09:02:01:00:05"
+                },
+                "dst_mac": {
+                  "choice": "mac",
+                  "mac": "00:50:f2:88:00:04"
+                },
+                "src_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.6.0.1"
+                },
+                "dst_ip": {
+                  "choice": "ipv4",
+                  "ipv4": "225.0.0.6"
+                },
+                "udp_dst_port": 4789
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

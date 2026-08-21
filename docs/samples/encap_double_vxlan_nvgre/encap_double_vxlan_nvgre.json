@@ -1,0 +1,81 @@
+{
+  "profiles": {
+    "layer_1_profiles": [
+      {
+        "name": "manual_400g_rs",
+        "choice": "manual",
+        "link_speed": "speed_400_gbps",
+        "manual": { "fec_mode": "reed_solomon" }
+      }
+    ]
+  },
+  "front_panel_ports": [
+    {
+      "name": "scenario_mixed_ingress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 25,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    },
+    {
+      "name": "scenario_mixed_egress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 26,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "name": "VLAN to VXLAN-NVGRE",
+      "endpoints": [
+        { "port_name": "scenario_mixed_ingress", "tags": ["vlan", "vlan"] },
+        { "port_name": "scenario_mixed_egress", "tags": ["vxlan", "nvgre"] }
+      ],
+      "functions": [
+        {
+          "choice": "connect_vlan_vxlan",
+          "connect_vlan_vxlan": {
+            "vlan_endpoint_settings": {
+              "vlan": { "choice": "vlan", "vlan": 401 }
+            },
+            "vxlan_endpoint_settings": {
+              "vni": { "choice": "vni", "vni": 11001 },
+              "protocols": {},
+              "outgoing_vxlan_header": {
+                "src_mac": { "choice": "mac", "mac": "80:09:02:01:00:09" },
+                "dst_mac": { "choice": "mac", "mac": "00:50:f2:88:00:08" },
+                "src_ip": { "choice": "ipv4", "ipv4": "225.9.0.1" },
+                "dst_ip": { "choice": "ipv4", "ipv4": "225.0.0.9" },
+                "udp_dst_port": 4789
+              }
+            }
+          }
+        },
+        {
+          "choice": "connect_vlan_nvgre",
+          "connect_vlan_nvgre": {
+            "vlan_endpoint_settings": {
+              "vlan": { "choice": "vlan", "vlan": 402 }
+            },
+            "nvgre_endpoint_settings": {
+              "vsid": { "choice": "vsid", "vsid": 11002 },
+              "protocols": {},
+              "outgoing_nvgre_header": {
+                "src_mac": { "choice": "mac", "mac": "80:09:02:01:00:0a" },
+                "dst_mac": { "choice": "mac", "mac": "00:50:f2:88:00:09" },
+                "src_ip": { "choice": "ipv4", "ipv4": "225.10.0.1" },
+                "dst_ip": { "choice": "ipv4", "ipv4": "225.0.0.10" },
+                "flow_id": 3
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

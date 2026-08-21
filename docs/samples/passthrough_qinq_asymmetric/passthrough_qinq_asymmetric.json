@@ -1,0 +1,91 @@
+{
+  "profiles": {
+    "layer_1_profiles": [
+      {
+        "name": "manual_400g_rs",
+        "choice": "manual",
+        "link_speed": "speed_400_gbps",
+        "manual": {
+          "fec_mode": "reed_solomon"
+        }
+      }
+    ]
+  },
+  "front_panel_ports": [
+    {
+      "name": "scenario9_ingress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 25,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    },
+    {
+      "name": "scenario9_egress",
+      "choice": "front_panel_port",
+      "front_panel_port": {
+        "front_panel_port": 26,
+        "channel": 1,
+        "layer_1_profile_name": "manual_400g_rs"
+      }
+    }
+  ],
+  "connections": [
+    {
+      "name": "Q-in-Q ARP Bypass Asymmetric",
+      "endpoints": [
+        {
+          "port_name": "scenario9_ingress",
+          "tags": [
+            "vlan",
+            "vlan"
+          ]
+        },
+        {
+          "port_name": "scenario9_egress",
+          "tags": [
+            "vlan",
+            "vlan"
+          ]
+        }
+      ],
+      "functions": [
+        {
+          "choice": "connect_arp",
+          "connect_arp": {
+            "vlan_endpoint_settings_port1": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 100
+              }
+            },
+            "vlan_endpoint_settings_port2": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 150
+              }
+            }
+          }
+        },
+        {
+          "choice": "connect_arp",
+          "connect_arp": {
+            "vlan_endpoint_settings_port1": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 200
+              }
+            },
+            "vlan_endpoint_settings_port2": {
+              "vlan": {
+                "choice": "vlan",
+                "vlan": 250
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
