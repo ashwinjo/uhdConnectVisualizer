@@ -2,12 +2,14 @@
 """Migrate a UHD Connect config from the OLD API schema to the NEW one.
 
 Self-contained: standard library only, Python 3.8+. Copy it anywhere.
+The visualizer's Convert panel (`migrate.js`) is the same rules for people who
+do not want a Python environment.
 
-    python migrate_uhd_config.py old.json                 # -> old.new.json
-    python migrate_uhd_config.py old.http -o new.http     # keeps the HTTP head
-    python migrate_uhd_config.py old.json --stdout        # print, write nothing
-    python migrate_uhd_config.py old.json --diff          # unified diff only
-    python migrate_uhd_config.py --selftest               # no input needed
+    python uhd_migration.py old.json                 # -> old.new.json
+    python uhd_migration.py old.http -o new.http     # keeps the HTTP head
+    python uhd_migration.py old.json --stdout        # print, write nothing
+    python uhd_migration.py old.json --diff          # unified diff only
+    python uhd_migration.py --selftest               # no input needed
 
 `.http` in, `.http` out: the request line and headers are kept verbatim and
 only the JSON body is rewritten, so the result stays click-to-send.

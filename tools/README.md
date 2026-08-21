@@ -1,8 +1,8 @@
 # Dev-only checks
 
 These scripts use Node's standard library only. There is no `package.json`, no npm install, and no
-browser download. `index.html`, `app.js`, `tutorials.js` and `UHDSchematic.png` are the deliverable;
-everything here is optional verification or the tutorial bundle step.
+browser download. `index.html`, `app.js`, `migrate.js`, `tutorials.js` and `UHDSchematic.png` are the
+deliverable; everything here is optional verification or the tutorial bundle step.
 
 If you swap in a different `UHDSchematic.png`, tick **Align grid** in the toolbar, nudge the values
 until the outlines sit on the cages, press *Copy values* and paste them back into `GEOM` in `app.js`.
@@ -40,6 +40,19 @@ Loads `app.js` against a stub DOM and checks, against the real files in `docs/sa
 - outside-entity boxes default to the port name, write nothing until customised, drop the
   `x_visualizer` key again when the last override is reset, follow a port rename, and warn (never
   error) when the key is malformed or names a port that no longer exists.
+
+## `migrate-test.cjs` — no dependencies
+
+```sh
+node tools/migrate-test.cjs
+```
+
+Loads `migrate.js` and checks it against `uhd_migration.py`:
+
+- the Python `--selftest` fixtures (double-encap, Q-in-Q `vlan_double`, `all_vlans`, VLAN ranges),
+- hard failures (`internal` endpoints, incomplete `vlan_double`, invalid JSON),
+- `.http` head/tail kept verbatim, JSON body rewritten,
+- `old.json`, if present, migrates to the same document as `python3 uhd_migration.py old.json --stdout --force`.
 
 ## `tutorials-test.cjs` — no dependencies
 

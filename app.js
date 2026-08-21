@@ -1038,9 +1038,12 @@ function renderChassis() {
   $('#emptyState').classList.toggle('hidden', !showEmpty);
   $('#lockBanner').classList.toggle('hidden', state.jsonValid);
   if (!state.jsonValid) {
-    $('#lockMsg').textContent = state.breakoutBlocked
+    const breakout = !!state.breakoutBlocked;
+    $('#lockMsg').textContent = breakout
       ? 'This config uses breakout channels. This tool is whole-port only (one cage = one port), so it will not draw it. Fix the JSON, or open a non-breakout config.'
-      : 'The chassis still shows the last valid configuration. Fix the JSON below, or revert it to what the canvas holds.';
+      : 'The chassis still shows the last valid configuration. Convert an old-schema file, fix the JSON below, or revert to what the canvas holds.';
+    const conv = $('#lockConvert');
+    if (conv) conv.classList.toggle('hidden', breakout);
   }
   $('#chassisMeta').innerHTML = legendHtml();
 }
@@ -2399,6 +2402,14 @@ function onAct(act, el, ev) {
       jsonEl().value = serialize(state.config);
       toast('Formatted.');
       return;
+    case 'migOpen': openMigrate(); return;
+    case 'migFromLock': openMigrate({ fromLock: true, run: true }); return;
+    case 'migClose': closeMigrate(); return;
+    case 'migPick': $('#migFileInput').click(); return;
+    case 'migRun': runMigrate(); return;
+    case 'migCopy': migCopy(); return;
+    case 'migSave': migSave(); return;
+    case 'migLoad': migLoad(); return;
     case 'tutOpen': openTutorials(null, null); return;
     case 'tutClose': closeTutorials(); return;
     case 'tutGo':
@@ -3010,6 +3021,8 @@ function renderTutorials(anchor) {
 }
 
 function openTutorials(file, anchor) {
+  if (mig.open) closeMigrate();
+  if (dev.open) closeDevice();
   const page = (file && tutPages().find(p => p.file === file)) || tutPage(tut.id);
   tut.open = true;
   tut.id = page ? page.id : null;
@@ -3020,6 +3033,148 @@ function openTutorials(file, anchor) {
 function closeTutorials() {
   tut.open = false;
   $('#tutBack').classList.add('hidden');
+}
+
+/* ------------------------------------------------------------------ convert
+ * Old-schema JSON (or a .http export) to the current schema, in the browser.
+ * Does not touch the chassis until the user presses Load onto canvas. */
+
+const mig = { open: false, sourceName: '', sourceText: '', result: null };
+
+function migApi() {
+  return (typeof UHDMigrate !== 'undefined' && UHDMigrate) || null;
+}
+
+function migOutName(sourceName, isHttp) {
+  const base = sourceName || (isHttp ? 'converted.http' : 'converted.json');
+  const lower = base.toLowerCase();
+  for (let i = 0; i < 2; i++) {
+    const ext = i ? '.json' : '.http';
+    if (lower.endsWith(ext)) return base.slice(0, -ext.length) + '.new' + ext;
+  }
+  return base + '.new';
+}
+
+function renderMigrate() {
+  const api = migApi();
+  const nameEl = $('#migFileName');
+  if (nameEl) nameEl.textContent = mig.sourceName || '';
+  const run = $('#migRun');
+  if (run) run.disabled = !String(mig.sourceText || '').trim() || !api;
+  const r = mig.result;
+  const ready = !!(r && r.ok && r.text);
+  const copy = $('#migCopy'), save = $('#migSave'), load = $('#migLoad');
+  if (copy) copy.disabled = !ready;
+  if (save) save.disabled = !ready;
+  if (load) load.disabled = !(r && r.ok && r.jsonText);
+  const out = $('#migOut');
+  if (out) out.value = ready ? r.text : '';
+  const sub = $('#migSub');
+  if (sub) sub.textContent = mig.sourceName ? mig.sourceName : 'old schema to new';
+
+  const box = $('#migReport');
+  if (!box) return;
+  if (!api) {
+    box.innerHTML = '<div class="banner red"><b>migrate.js did not load.</b> Copy it into the same folder as index.html.</div>';
+    return;
+  }
+  if (!r) {
+    box.innerHTML = '<p class="hint">Convert to see the rewritten JSON here. Copy or Save it, or Load onto canvas if you want to inspect it and push from Device.</p>';
+    return;
+  }
+  if (!r.ok) {
+    box.innerHTML = '<div class="banner red"><b>Could not convert.</b> ' + esc(r.error) + '</div>';
+    return;
+  }
+  const problems = (r.report && r.report.problems) || [];
+  const changes = (r.report && r.report.changes) || [];
+  if (problems.length) {
+    box.innerHTML = '<div class="banner amber"><b>' + problems.length + ' item(s) could not be mapped.</b> Copy and Save still work. Edit those by hand before pushing.'
+      + '<ul>' + problems.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul></div>';
+    return;
+  }
+  if (!changes.length) {
+    box.innerHTML = '<div class="banner ok"><b>Already the new schema.</b> Nothing was rewritten.</div>';
+    return;
+  }
+  box.innerHTML = '<div class="banner ok"><b>Converted.</b> ' + changes.length + ' change(s) applied.</div>';
+}
+
+function openMigrate(opts) {
+  opts = opts || {};
+  if (tut.open) closeTutorials();
+  if (dev.open) closeDevice();
+  if (opts.fromLock) {
+    mig.sourceName = state.fileName || '';
+    mig.sourceText = jsonEl().value;
+    mig.result = null;
+  }
+  mig.open = true;
+  $('#migBack').classList.remove('hidden');
+  const inp = $('#migIn');
+  if (inp) inp.value = mig.sourceText;
+  renderMigrate();
+  if (opts.run) runMigrate();
+  else if (inp && !mig.sourceText) inp.focus();
+}
+
+function closeMigrate() {
+  mig.open = false;
+  $('#migBack').classList.add('hidden');
+}
+
+function runMigrate() {
+  const api = migApi();
+  if (!api) { renderMigrate(); return; }
+  const inp = $('#migIn');
+  if (inp) mig.sourceText = inp.value;
+  if (!String(mig.sourceText || '').trim()) {
+    toast('Paste or upload an old config first.');
+    return;
+  }
+  mig.result = api.migrateText(mig.sourceText, { fileName: mig.sourceName || '' });
+  renderMigrate();
+  if (mig.result.ok) toast(mig.result.report.problems.length ? 'Converted with warnings.' : 'Converted.');
+}
+
+function migOpenFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    mig.sourceName = file.name;
+    mig.sourceText = String(reader.result);
+    mig.result = null;
+    const inp = $('#migIn');
+    if (inp) inp.value = mig.sourceText;
+    renderMigrate();
+    runMigrate();
+  };
+  reader.readAsText(file);
+}
+
+function migCopy() {
+  if (!mig.result || !mig.result.ok) return;
+  navigator.clipboard.writeText(mig.result.text).then(() => toast('Converted JSON copied.'), () => toast('Copy failed.'));
+}
+
+function migSave() {
+  if (!mig.result || !mig.result.ok) return;
+  const name = migOutName(mig.sourceName, mig.result.isHttp);
+  const blob = new Blob([mig.result.text], { type: mig.result.isHttp ? 'text/plain' : 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Saved ' + name);
+}
+
+function migLoad() {
+  if (!mig.result || !mig.result.ok || !mig.result.jsonText) return;
+  if (!confirmDiscard()) return;
+  let name = mig.sourceName || 'converted.json';
+  if (/\.http$/i.test(name)) name = name.replace(/\.http$/i, '.json');
+  closeMigrate();
+  loadText(mig.result.jsonText, migOutName(name, false));
 }
 
 /* ------------------------------------------------------------------ device
@@ -3373,6 +3528,8 @@ async function devPush() {
 /* ---------------- open and close ---------------- */
 
 function openDevice() {
+  if (mig.open) closeMigrate();
+  if (tut.open) closeTutorials();
   dev.open = true;
   $('#devBack').classList.remove('hidden');
   const ip = $('#devIp');
@@ -3425,10 +3582,20 @@ function initEvents() {
       renderDevCert();
       return;
     }
+    if (el.id === 'migIn') {
+      mig.sourceText = el.value;
+      if (mig.result) { mig.result = null; renderMigrate(); }
+      else {
+        const run = $('#migRun');
+        if (run) run.disabled = !String(mig.sourceText || '').trim() || !migApi();
+      }
+      return;
+    }
     if (el.dataset && el.dataset.dpath) onDraftInput(el);
   });
   document.addEventListener('keydown', ev => {
     if (ev.key === 'Escape') {
+      if (mig.open) { closeMigrate(); return; }
       if (dev.open) { closeDevice(); return; }
       if (tut.open) { closeTutorials(); return; }
       if (!$('#modalBack').classList.contains('hidden')) { closeModal(); return; }
@@ -3450,6 +3617,7 @@ function initEvents() {
   $('#modalBack').addEventListener('mousedown', ev => { if (ev.target.id === 'modalBack') closeModal(); });
   $('#tutBack').addEventListener('mousedown', ev => { if (ev.target.id === 'tutBack') closeTutorials(); });
   $('#devBack').addEventListener('mousedown', ev => { if (ev.target.id === 'devBack') closeDevice(); });
+  $('#migBack').addEventListener('mousedown', ev => { if (ev.target.id === 'migBack') closeMigrate(); });
 
   $('#jsonText').addEventListener('input', onJsonInput);
   $('#alignToggle').addEventListener('change', e => {
@@ -3483,6 +3651,14 @@ function initEvents() {
     const f = e.target.files && e.target.files[0];
     if (f) openFile(f);
     e.target.value = '';
+  });
+  $('#migFileInput').addEventListener('change', e => {
+    const f = e.target.files && e.target.files[0];
+    if (f) migOpenFile(f);
+    e.target.value = '';
+  });
+  $('#migIn').addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); runMigrate(); }
   });
 
   // chassis: click to select/assign, drag to connect

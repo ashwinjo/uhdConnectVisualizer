@@ -142,6 +142,7 @@ input[type=radio], input[type=checkbox] { accent-color: var(--red); }
 .btn:hover:not(:disabled) { background: #2a3440; border-color: #526070; }
 .btn:active:not(:disabled) { background: #1a222a; transform: scale(.98); }
 .btn:disabled { opacity: .38; cursor: not-allowed; }
+.btn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 .btn.primary { background: var(--red); border-color: var(--red); color: #fff; font-weight: 600; }
 .btn.primary:hover:not(:disabled) { background: var(--red-soft); border-color: var(--red-soft); }
 .btn.danger { color: var(--red-soft); border-color: #5a2832; }
@@ -184,12 +185,33 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 #brand .word { display: flex; flex-direction: column; gap: 2px; line-height: 1.1; }
 #brand b { font-size: 17px; letter-spacing: -.3px; font-weight: 600; }
-#brand span {
+#brand .meta {
+  display: flex; align-items: center; gap: 7px;
   color: var(--muted-2);
   font-size: 11px;
   letter-spacing: .14em;
   font-variant: all-small-caps;
   font-weight: 500;
+}
+#brand .ver {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0;
+  font-variant: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+#brand .beta {
+  font-variant: normal;
+  letter-spacing: .08em;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #e8c46a;
+  border: 1px solid var(--amber);
+  border-radius: 2px;
+  padding: 0 4px;
+  line-height: 1.4;
 }
 #fileLabel {
   font-family: var(--mono);
@@ -545,6 +567,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 #lockBanner b { color: var(--red-soft); display: block; margin-bottom: 6px; }
 #lockBanner p { margin: 0 0 12px; color: var(--muted); font-size: 12px; }
+#lockBanner .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
 
 table.tbl { width: 100%; border-collapse: collapse; }
 table.tbl th {
@@ -648,6 +671,7 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
 }
 .banner.amber { border-left-color: var(--amber); color: #e8c46a; background: #14110a; }
 .banner.red { border-left-color: var(--red); color: #ff8b9c; background: #140a0d; }
+.banner.ok { border-left-color: var(--ok); color: #9ec9ab; background: #0e1612; }
 .banner b { color: inherit; }
 .warnlist { list-style: none; margin: 0; padding: 0; }
 .warnlist li { padding: 5px 0; border-bottom: 1px solid #1b1b20; font-size: 11.5px; color: #e8c46a; display: flex; gap: 7px; }
@@ -719,13 +743,13 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
   flex: 0 0 46px; display: flex; align-items: center; gap: 10px;
   padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--panel);
 }
-#tutPanel > header .mark, #devPanel > header .mark {
+#tutPanel > header .mark, #devPanel > header .mark, #migPanel > header .mark {
   width: 11px; height: 18px;
   background: linear-gradient(180deg, var(--red-soft), var(--red));
   clip-path: polygon(0 0, 100% 0, 100% 72%, 55% 100%, 0 72%);
 }
-#tutPanel > header h2, #devPanel > header h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -.2px; }
-#tutPanel > header .sub { color: var(--muted-2); font-size: 11.5px; font-family: var(--mono); }
+#tutPanel > header h2, #devPanel > header h2, #migPanel > header h2 { margin: 0; font-size: 13px; font-weight: 600; letter-spacing: -.2px; }
+#tutPanel > header .sub, #devPanel > header .sub, #migPanel > header .sub { color: var(--muted-2); font-size: 11.5px; font-family: var(--mono); }
 #tutMain { flex: 1; display: flex; min-height: 0; }
 
 #tutNav {
@@ -879,6 +903,52 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
 }
 #devMetrics tr:hover td, #devMetrics tr:hover td.rl { background: var(--panel-3); }
 
+/* ---------- convert panel ---------- */
+#migBack {
+  position: fixed; inset: 0; background: #000000cc; backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; z-index: 60; padding: 24px;
+}
+#migPanel {
+  width: 100%; max-width: 1180px; height: 100%;
+  background: var(--panel); border: 1px solid var(--line-2); border-radius: 8px;
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
+}
+#migPanel > header {
+  flex: 0 0 46px; display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+#migMain { flex: 1; display: flex; min-height: 0; }
+#migSource, #migResult {
+  flex: 1; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; padding: 14px;
+}
+#migSource { border-right: 1px solid var(--line); }
+#migSource .hint, #migResult .hint { margin: 0 0 10px; }
+#migIn, #migOut {
+  flex: 1; min-height: 0; width: 100%;
+  border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: #0c1216; color: var(--text);
+  font-family: var(--mono); font-size: 12px; line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+  padding: 10px 12px; resize: none; tab-size: 2; white-space: pre; overflow: auto;
+}
+#migIn:focus, #migOut:focus { outline: 1px solid var(--red); outline-offset: -1px; }
+#migOut { color: #d7d7dc; }
+#migSource .migacts, #migResult .migacts {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+}
+#migFileName { font-family: var(--mono); font-size: 11.5px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#migReport { flex: none; max-height: 160px; overflow: auto; margin-bottom: 10px; }
+#migReport .banner { margin-bottom: 8px; }
+#migReport .banner:last-child { margin-bottom: 0; }
+#migReport ul { margin: 6px 0 0; padding-left: 18px; }
+#migReport li { margin-bottom: 3px; }
+@media (max-width: 840px) {
+  #migMain { flex-direction: column; }
+  #migSource { border-right: 0; border-bottom: 1px solid var(--line); }
+}
+
 /* request output */
 .devout { margin-top: 9px; border: 1px solid var(--line-2); border-radius: var(--radius-lg); background: #0c1216; overflow: hidden; }
 .devout.bad { border-color: #4a2129; }
@@ -933,7 +1003,7 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
 #credit {
   flex: 0 0 auto;
   text-align: center;
-  padding: 7px 14px;
+  padding: 8px 14px 9px;
   font-size: 11.5px;
   color: var(--muted-2);
   border-top: 1px solid var(--line);
@@ -942,13 +1012,14 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
 }
 #credit b { color: var(--text); font-weight: 600; }
 #credit .heart { color: var(--red-soft); padding: 0 1px; }
+#credit .disc { margin-top: 3px; font-size: 11px; color: var(--muted-2); letter-spacing: 0; }
 </style>
 </head>
 <body>
 
 <a class="skip" href="#main">Skip to canvas</a>
 <div id="toolbar">
-  <div id="brand"><i class="mark" aria-hidden="true"></i><div class="word"><b>UHD Connect Visualizer</b><span>32-port</span></div></div>
+  <div id="brand"><i class="mark" aria-hidden="true"></i><div class="word"><b>UHD Connect Visualizer</b><span class="meta">32-port <span class="ver">v1.0.0</span> <i class="beta">Beta</i></span></div></div>
   <div id="fileLabel">Untitled</div>
   <div class="tbsep"></div>
   <button class="btn" data-act="new">New</button>
@@ -966,6 +1037,7 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
     <input type="checkbox" id="alignToggle" style="width:auto"> Align grid
   </label>
   <div class="tbsep"></div>
+  <button class="btn" data-act="migOpen" title="Convert an old-schema UHD config to the current JSON">Convert</button>
   <button class="btn" data-act="tutOpen" title="Configuration tutorials for every sample scenario">Tutorials</button>
   <button class="btn" data-act="devOpen" title="Talk to a live UHD: watch port counters, pull its config or push the canvas">Device</button>
   <div class="tbsep"></div>
@@ -1020,13 +1092,14 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
           <div id="emptyState" class="hidden">
             <div class="box">
               <h2>No configuration loaded</h2>
-              <p>Open or paste a UHD Connect JSON config to see it on the chassis, or start from scratch: create a Layer&nbsp;1 profile, assign it to front-panel ports, then drag between ports to connect them.</p>
+              <p>Open or paste a UHD Connect JSON config to see it on the chassis, or start from scratch: create a Layer&nbsp;1 profile, assign it to front-panel ports, then drag between ports to connect them. An old-schema file goes through <b>Convert</b> first.</p>
               <div class="row">
                 <button class="btn primary" data-act="open">Open JSON file</button>
                 <button class="btn" data-act="pasteJson">Paste JSON</button>
                 <button class="btn" data-act="scratch">Start from scratch</button>
               </div>
               <div class="row" style="margin-top:10px">
+                <button class="btn" data-act="migOpen">Convert old schema</button>
                 <button class="btn ghost" data-act="tutOpen">Or read the tutorials first</button>
               </div>
             </div>
@@ -1035,7 +1108,10 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
             <div class="box">
               <b>Canvas locked - JSON is not valid</b>
               <p id="lockMsg"></p>
-              <button class="btn" data-act="revertJson">Revert JSON to canvas</button>
+              <div class="row">
+                <button class="btn" id="lockConvert" data-act="migFromLock">Convert old schema</button>
+                <button class="btn" data-act="revertJson">Revert JSON to canvas</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1066,7 +1142,7 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
   </aside>
 </div>
 
-<footer id="credit">Made with <span class="heart" aria-hidden="true">♥</span> love by <b>@Ashwin Joshi</b></footer>
+<footer id="credit">Made with <span class="heart" aria-hidden="true">♥</span> love by <b>Keysight</b><div class="disc">The tool is in beta build. If you find any issues please reach out to your Keysight Contact</div></footer>
 
 <div id="modalBack" class="hidden"></div>
 
@@ -1152,8 +1228,45 @@ td.ends { font-family: var(--mono); font-size: 12px; color: var(--muted); white-
 </div>
 
 <input type="file" id="fileInput" accept=".json,application/json" class="hidden">
+<input type="file" id="migFileInput" accept=".json,.http,application/json,text/plain" class="hidden">
+
+<div id="migBack" class="hidden">
+  <div id="migPanel">
+    <header>
+      <i class="mark"></i>
+      <h2>Convert</h2>
+      <span class="sub" id="migSub">old schema to new</span>
+      <div class="spacer"></div>
+      <button class="btn ghost" data-act="migClose">Close</button>
+    </header>
+    <div id="migMain">
+      <section id="migSource">
+        <h3 class="subh">Old config</h3>
+        <p class="hint">Paste a UHD Connect JSON (or a <code>.http</code> export) from the old API schema. Nothing leaves this page. Ctrl+Enter or Cmd+Enter converts.</p>
+        <textarea id="migIn" spellcheck="false" wrap="off" placeholder="Paste old JSON here"></textarea>
+        <div class="migacts">
+          <button class="btn" data-act="migPick">Upload file</button>
+          <span id="migFileName" class="mini"></span>
+          <div class="spacer"></div>
+          <button class="btn primary" id="migRun" data-act="migRun" disabled>Convert</button>
+        </div>
+      </section>
+      <section id="migResult">
+        <h3 class="subh">New config</h3>
+        <div id="migReport"><p class="hint">Convert to see the rewritten JSON here. Copy or Save it, or Load onto canvas if you want to inspect it and push from Device.</p></div>
+        <textarea id="migOut" spellcheck="false" wrap="off" readonly placeholder="Converted JSON appears here."></textarea>
+        <div class="migacts">
+          <button class="btn" id="migCopy" data-act="migCopy" disabled>Copy</button>
+          <button class="btn" id="migSave" data-act="migSave" disabled>Save</button>
+          <button class="btn" id="migLoad" data-act="migLoad" disabled>Load onto canvas</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
 
 <script src="tutorials.js"></script>
+<script src="migrate.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -23,14 +23,36 @@ The pages are the markdown in `docs/tutorials/`, readable on their own starting 
 
 Open `index.html` in a browser. There is no build step, no server and no dependencies.
 
-The page is four files:
+The page is five files:
 
 | File | Purpose |
 | --- | --- |
 | `index.html` | Markup and all styling |
-| `app.js` | All behaviour (model, validation, canvas, JSON sync, tutorial reader, device panel) |
+| `app.js` | All behaviour (model, validation, canvas, JSON sync, tutorial reader, device panel, convert panel) |
+| `migrate.js` | Old-schema to new-schema conversion, used by the Convert panel |
 | `tutorials.js` | The tutorial pages, generated from `docs/tutorials/` |
 | `UHDSchematic.png` | The front-panel photo the canvas is drawn on |
+
+Copy the whole folder onto the machine. There is nothing to install. Python is not required.
+
+## Converting an old-schema config
+
+The UHD API schema changed on 2026-07-28. An old config will not draw correctly if you Open it as-is.
+
+1. Open `index.html` in a browser.
+2. Click **Convert** (also on the empty-canvas screen).
+3. Upload the old `.json` (or a `.http` export), or paste it into the left pane.
+4. **Copy** or **Save** the new JSON. That is the file you keep and apply.
+5. To look at it on the chassis or push it to a box, **Load onto canvas**, then use **Device → Push canvas**.
+
+Nothing is sent anywhere. Conversion runs in the browser from `migrate.js`.
+
+Developers who still want a CLI can run `uhd_migration.py` (Python 3.8+, standard library only):
+
+```
+python uhd_migration.py old.json
+python uhd_migration.py old.json --stdout
+```
 
 `tutorials.js` is generated rather than fetched at runtime because a page opened over `file://`
 cannot fetch a sibling file. If it is missing the panel says how to regenerate it, and nothing else
