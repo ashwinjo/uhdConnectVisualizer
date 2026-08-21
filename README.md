@@ -58,7 +58,8 @@ out of order.
    numbered in column pairs: port 1 is top-left with port 2 below it, through to 31/32 on the far
    right. Each assigned cage prints the name that connections use for it; the **Port names** toggle
    in the toolbar hides the labels, and a name too long for the cage is cut in the middle (the full
-   name is in the tooltip and the inspector).
+   name is in the tooltip and the inspector). **Zoom** above the chassis (or `+` / `-`, or
+   Ctrl+scroll) enlarges the faceplate so port names and highlighted cages are easier to read.
 3. **Drag from one assigned cage to another** to create a connection. The cage you start the drag on
    becomes `port1` (`endpoints[0]`); use *Swap ends* in the inspector to reverse it.
 

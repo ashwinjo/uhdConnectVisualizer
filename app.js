@@ -59,6 +59,8 @@ const SAMPLE = {
  * Adjust any of it live with the "Align grid" toggle. */
 const IMG_W = 976, IMG_H = 508;
 const GEOM = { x: 8.99, y: 51.92, w: 86.2, h: 13.62, padX: 8, padY: 12, cropTop: 244, cropH: 110 };
+const WRAP_MAX = 1180, WRAP_MIN = 640;
+const ZOOM_MIN = 0.75, ZOOM_MAX = 2.5, ZOOM_STEP = 0.25;
 
 /* ------------------------------------------------------------------ tiny helpers */
 
@@ -120,7 +122,8 @@ const state = {
   connQuery: '',
   connShown: null,     // null = every connection; Set of indices otherwise
   connMenuOpen: false,
-  groupPick: null      // { nums, profileName, groupName, newProfile } while picking group members
+  groupPick: null,     // { nums, profileName, groupName, newProfile } while picking group members
+  zoom: 1
 };
 
 /* ------------------------------------------------------------------ derivations */
@@ -846,6 +849,48 @@ function renderToolbar() {
     gpBar.classList.toggle('hidden', !state.groupPick);
     if (state.groupPick) renderGroupPickBar();
   }
+  applyZoom();
+}
+
+function snapZoom(z) {
+  const n = Math.round(z / ZOOM_STEP) * ZOOM_STEP;
+  return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(n * 100) / 100));
+}
+function applyZoom() {
+  const wrap = $('#chassisWrap');
+  const sc = $('#chassisScroll');
+  const z = state.zoom || 1;
+  if (wrap) {
+    wrap.style.width = (100 * z) + '%';
+    wrap.style.maxWidth = (WRAP_MAX * z) + 'px';
+    wrap.style.minWidth = Math.round(WRAP_MIN * z) + 'px';
+    if (typeof wrap.style.setProperty === 'function') wrap.style.setProperty('--zoom', String(z));
+  }
+  if (sc) sc.classList.toggle('zoomed', z > 1.001);
+  const lab = $('#zoomLabel');
+  if (lab) lab.textContent = Math.round(z * 100) + '%';
+  const zi = document.querySelector('[data-act="zoomIn"]');
+  const zo = document.querySelector('[data-act="zoomOut"]');
+  if (zi) zi.disabled = z >= ZOOM_MAX - 0.001;
+  if (zo) zo.disabled = z <= ZOOM_MIN + 0.001;
+}
+function setZoom(next) {
+  const z = snapZoom(next);
+  if (Math.abs(z - (state.zoom || 1)) < 0.001) { applyZoom(); return; }
+  const sc = $('#chassisScroll');
+  let cx = 0, cy = 0, ratio = 1;
+  if (sc) {
+    cx = sc.scrollLeft + sc.clientWidth / 2;
+    cy = sc.scrollTop + sc.clientHeight / 2;
+    ratio = z / (state.zoom || 1);
+  }
+  state.zoom = z;
+  applyZoom();
+  if (sc) {
+    sc.scrollLeft = cx * ratio - sc.clientWidth / 2;
+    sc.scrollTop = cy * ratio - sc.clientHeight / 2;
+  }
+  requestAnimationFrame(renderWires);
 }
 
 function renderProfiles() {
@@ -1019,8 +1064,9 @@ function sizeCageText() {
   const r = one.getBoundingClientRect();
   if (!r.height) return;
   const clamp = (lo, v, hi) => Math.max(lo, Math.min(hi, v));
-  const numPx = clamp(7, r.height * 0.30, 11);
-  const nmPx = clamp(6, r.height * 0.27, 9.5);
+  const z = state.zoom || 1;
+  const numPx = clamp(7, r.height * 0.30, 11 * z);
+  const nmPx = clamp(6, r.height * 0.27, 9.5 * z);
   layer.style.setProperty('--cage-num', numPx.toFixed(1) + 'px');
   layer.style.setProperty('--cage-nm', nmPx.toFixed(1) + 'px');
   layer.classList.toggle('tiny', r.height < 17);
@@ -1060,7 +1106,9 @@ function layoutOutside(cropRect) {
     // mono text, so width is predictable enough to pack without measuring every box;
     // capped so one long name cannot push the whole rail into extra rows
     const chars = label.length + chip.length + (out.kind ? OUTSIDE_KIND_TAG[out.kind].length + 3 : 0);
-    const w = Math.max(cellW, Math.min(OBOX_MAX_W, 21 + chars * 6.25));
+    const maxW = OBOX_MAX_W * (state.zoom || 1);
+    const charW = 6.25 * (state.zoom || 1);
+    const w = Math.max(cellW, Math.min(maxW, 21 * (state.zoom || 1) + chars * charW));
     boxes.push({ obj: o, out, label, chip, cx, w, cages });
   }
   boxes.sort((a, b) => a.cx - b.cx || a.obj.name.localeCompare(b.obj.name));
@@ -1090,7 +1138,8 @@ function renderOutsideRail(cropRect) {
   const rail = $('#outsideRail');
   if (!rail) return null;
   const L = layoutOutside(cropRect);
-  const boxH = 21, gap = 5, lead = 14;
+  const z = state.zoom || 1;
+  const boxH = 21 * z, gap = 5, lead = 14;
   const railH = L.rows ? L.rows * boxH + (L.rows - 1) * gap + lead : 0;
   rail.classList.toggle('hidden', !railH);
   rail.style.height = railH + 'px';
@@ -2304,6 +2353,9 @@ function onAct(act, el, ev) {
       toast('Paste your UHD Connect JSON in the pane on the right, then it renders here.');
       return;
     case 'scratch': state.scratch = true; render(true); return;
+    case 'zoomIn': setZoom((state.zoom || 1) + ZOOM_STEP); return;
+    case 'zoomOut': setZoom((state.zoom || 1) - ZOOM_STEP); return;
+    case 'zoomReset': setZoom(1); return;
     case 'revertJson':
       jsonEl().value = serialize(state.config);
       state.jsonValid = true;
@@ -3363,6 +3415,10 @@ function initEvents() {
       if (go) go.click();
     }
     if (ev.key === 'Enter' && ev.target.id === 'devIp') devReadMetrics();
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName) || ev.target.isContentEditable;
+    if (!typing && (ev.key === '+' || ev.key === '=')) { ev.preventDefault(); setZoom((state.zoom || 1) + ZOOM_STEP); }
+    if (!typing && ev.key === '-') { ev.preventDefault(); setZoom((state.zoom || 1) - ZOOM_STEP); }
+    if ((ev.key === '0' || ev.key === 'Digit0') && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); setZoom(1); }
   });
   $('#modalBack').addEventListener('mousedown', ev => { if (ev.target.id === 'modalBack') closeModal(); });
   $('#tutBack').addEventListener('mousedown', ev => { if (ev.target.id === 'tutBack') closeTutorials(); });
@@ -3542,6 +3598,14 @@ function initEvents() {
   window.addEventListener('resize', () => renderWires());
   const img = $('#chassisImg');
   if (img) img.addEventListener('load', () => renderWires());
+  const sc = $('#chassisScroll');
+  if (sc) {
+    sc.addEventListener('wheel', ev => {
+      if (!(ev.ctrlKey || ev.metaKey)) return;
+      ev.preventDefault();
+      setZoom((state.zoom || 1) + (ev.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP));
+    }, { passive: false });
+  }
 }
 
 function dragSash(el, axis, onMove) {
