@@ -1,0 +1,20 @@
+{
+  "current_phase": "phase_3",
+  "active_invention": "bidirectional-chassis-config-authoring",
+  "output_mode": "local_only",
+  "inventions": {
+    "bidirectional-chassis-config-authoring": {
+      "title": "Method and system for bidirectional visual authoring and validation of a network-appliance connectivity configuration over a photorealistic front-panel model",
+      "status": "draft_complete_local",
+      "last_phase_completed": "phase_3",
+      "novelty_statement": "The inventive step is not \u201ca GUI for JSON\u201d and not \u201cdrawing ports on a chassis photo.\u201d Those exist. The inventive step is a dual-view configuration object bound to a calibrated physical faceplate, plus construction rules that close a documented silent-accept hole in a function-centric connectivity schema.\n\nThree mechanisms work together:\n\n1. **Function-driven positional tag synthesis.** Table `FN`",
+      "notes": [
+        "User requested local-only; Google Docs publish skipped.",
+        "gogcli installed but unauthorized; not used.",
+        "Targeted analysis from prodinfo.md + codebase.",
+        "Phase 4 multi-agent QC not run.",
+        "Inventor Q&A taken from prodinfo.md; legal TODOs remain."
+      ]
+    }
+  }
+}

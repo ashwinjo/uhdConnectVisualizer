@@ -1,0 +1,323 @@
+{
+  "invention_title": "Method and system for bidirectional visual authoring and validation of a network-appliance connectivity configuration over a photorealistic front-panel model",
+  "invention_slug": "bidirectional-chassis-config-authoring",
+  "inventors": [
+    {
+      "name": "Ashwin Joshi",
+      "email": "ashwinjosh@gmail.com",
+      "citizenship": "TODO",
+      "contribution": "Git author of the reduction to practice. Legal inventor list and migrate.js co-inventor not confirmed."
+    }
+  ],
+  "created_date": "2026-08-23",
+  "novelty_statement": "The inventive step is not \u201ca GUI for JSON\u201d and not \u201cdrawing ports on a chassis photo.\u201d Those exist. The inventive step is a dual-view configuration object bound to a calibrated physical faceplate, plus construction rules that close a documented silent-accept hole in a function-centric connectivity schema.\n\nThree mechanisms work together:\n\n1. **Function-driven positional tag synthesis.** Table `FN` in `app.js` stores `tag1`/`tag2` per function choice. `deriveTags(conn)` walks `conn.functions` in order and builds two arrays; `applyTags` writes them onto `endpoints[0]` and `endpoints[1]`, or deletes the `tags` key when the list is empty (Ethernet contributes none). The device API requires `tags[i]` to be that endpoint\u2019s role for `functions[i]`. A short or swapped list returns HTTP 200 and forwards nothing. The visualizer produces the eleven shipped canvas-editable samples\u2019 tags by construction.",
+  "metadata": {
+    "repository_url": "https://github.com/ashwinjo/uhdConnectVisualizer.git",
+    "business_unit": "Keysight \u2014 UHD Connect / applications (unconfirmed)",
+    "products": [
+      "UHD Connect Visualizer",
+      "Keysight UHD Connect"
+    ],
+    "conception_date": "TODO \u2014 any record before 2026-08-20",
+    "reduction_to_practice_date": "2026-08-20",
+    "first_written_record": {
+      "date": "2026-08-20",
+      "document_name": "uhdConnectVisualizer initial commit; prodinfo.md 2026-08-22",
+      "location": "this repository"
+    },
+    "prior_disclosure": {
+      "disclosed_externally": true,
+      "disclosure_details": "Public-style GitHub remote https://github.com/ashwinjo/uhdConnectVisualizer.git. Confirm public date with counsel. US grace period may apply; most other jurisdictions have none.",
+      "nda_in_place": false,
+      "sold_or_offered": false,
+      "sale_details": "Beta distribution to Keysight contacts unconfirmed.",
+      "future_disclosure_planned": false,
+      "future_details": "Productization path unconfirmed."
+    },
+    "key_files": [
+      "app.js",
+      "migrate.js",
+      "index.html",
+      "prodinfo.md",
+      "docs/samples/encap_single_vlan_vxlan/encap_single_vlan_vxlan.json",
+      "docs/samples/passthrough_single_symmetric/passthrough_single_symmetric.json",
+      "tools/roundtrip-test.cjs"
+    ],
+    "git_contributors": [
+      "Ashwin Joshi <ashwinjosh@gmail.com>"
+    ]
+  },
+  "sections": [
+    {
+      "id": "executive_summary",
+      "name": "Executive Summary",
+      "question": "What is the invention in non-technical terms?",
+      "status": "draft",
+      "answer": "A computer-implemented system authors, visualizes, and live-verifies the JSON configuration of a multi-port connectivity appliance by overlaying a clickable cage grid on a photograph of the appliance front panel. The parsed configuration object is the single source of truth and is mutated in place, so canvas edits and JSON-text edits stay equivalent without dropping unknown schema fields.\n\nThe appliance API at issue accepts a posted document with HTTP 200 even when positional endpoint-role tags do not match the ordered function list, in which case no frames are forwarded. The system never asks the operator to type those tags. It derives them from a function-type metadata table on every canvas edit of a connection. Incomplete encapsulation connections exist only as a UI draft (amber wire) until required tunnel fields are filled; they are omitted from the serializable document. When the JSON text is illegal, the canvas locks and continues to show the last successfully validated object; Save and device Push are refused.\n\nOptional live port counters on names that also exist on the canvas let an operator distinguish \u201caccepted\u201d from \u201cforwarding.\u201d A convert path migrates pre-break schema documents and reconstructs the positional tag model. Display-only far-end labels live under a pruned extension key that is stripped on device push.\n\nReduction to practice: a static five-file web application (`index.html`, `app.js`, `migrate.js`, `tutorials.js`, `UHDSchematic.png`) that runs from `file://`.\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "novelty",
+      "name": "Novelty \u2014 What Is New",
+      "question": "What is genuinely new \u2014 the inventive step?",
+      "status": "draft",
+      "answer": "The inventive step is not \u201ca GUI for JSON\u201d and not \u201cdrawing ports on a chassis photo.\u201d Those exist. The inventive step is a dual-view configuration object bound to a calibrated physical faceplate, plus construction rules that close a documented silent-accept hole in a function-centric connectivity schema.\n\nThree mechanisms work together:\n\n1. **Function-driven positional tag synthesis.** Table `FN` in `app.js` stores `tag1`/`tag2` per function choice. `deriveTags(conn)` walks `conn.functions` in order and builds two arrays; `applyTags` writes them onto `endpoints[0]` and `endpoints[1]`, or deletes the `tags` key when the list is empty (Ethernet contributes none). The device API requires `tags[i]` to be that endpoint\u2019s role for `functions[i]`. A short or swapped list returns HTTP 200 and forwards nothing. The visualizer produces the eleven shipped canvas-editable samples\u2019 tags by construction.\n\n2. **Last-valid visual lock.** `applyJsonText` (debounced ~220 ms) parses the textarea. On parse failure or `validate()` errors it sets `state.jsonValid = false` and **does not assign** `state.config`. The chassis keeps drawing the last good object; the lock banner appears; Save (`app.js` ~2231) and Push (`app.js` ~3497) refuse. Revert throws the broken text away. This is not a CRDT: it is an explicit freeze of the last-good object graph while the text stream is illegal.\n\n3. **Withheld encapsulation draft.** `createConnection` for `connect_vlan_vxlan` / `connect_vlan_nvgre` writes `state.draft` and returns without pushing into `connections`. `draftMissing` requires VLAN ID, VNI/VSID, and four outer-header MAC/IP fields. `commitDraft` inserts the connection and then `applyTags`. An empty Ethernet/ARP function is valid and is committed immediately; an empty tunnel is not.\n\nSupporting mechanisms that counsel may claim as dependents: in-place mutation so unaothored keys (`mirror_to`, PFC, pause, `connect_ip`) survive; `x_visualizer` written only when customized, pruned when empty (byte-identical open/save of vendor samples), deleted from the Push payload; overlap/tag-mismatch warnings bound to canvas selection; live counters marked \u201con canvas\u201d; `collapseEndpoints` in `migrate.js` rebuilding positional tags from legacy `function_N` markers and splitting `vlan_double` into stacked functions (outer first).\n\n**What is not claimed as novel:** a generic JSON Schema form; a generic rack-elevation photo overlay; REST GET/POST of device config; tutorials as documentation.\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "context",
+      "name": "Context & Environment",
+      "question": "Where does the invention operate?",
+      "status": "draft",
+      "answer": "The host product is a 32-cage front-panel connectivity appliance. Configuration is one JSON object posted to `https://<unit>/connect/api/v1/config`. The object has three dependent sections: `profiles.layer_1_profiles` (speed / autonegotiation-or-manual / FEC), `front_panel_ports` (name bound to cage 1\u201332 or a `port_group`), and `connections` (named endpoints plus an ordered `functions` list).\n\nAfter a host-API schema break on 2026-07-28, endpoints hold only `port_name` plus optional `tags`. Every VLAN, VNI/VSID, MAC and IP lives on a function. Passthrough functions (`connect_ethernet`, `connect_arp`) attach VLANs as `vlan_endpoint_settings_port1` / `_port2` \u2014 endpoint order is permanent. Encapsulation functions (`connect_vlan_vxlan`, `connect_vlan_nvgre`) attach settings by role; which physical port plays which role is decided by tags, not array position. Q-in-Q and double encapsulation are not schema types; they are one connection with two functions, `functions[0]` outer.\n\nOperators work in air-gapped labs. The embodiment is offline (`file://`, no build, no server). Device talk is opt-in from a Device panel (pull/push/counters). The authoritative schema is `docs/openapi.json`. Fourteen vendor samples live under `docs/samples/`.\n\nCage numbering is column-paired: column 1 is ports 1 (top) and 2 (bottom), through 31/32. JSON uses names and integers; the physical box is a photograph. Mismatch between \u201cI used cage 25\u201d and \u201cthe file names port 26\u201d is a typical troubleshooting loop.\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "problems_solved",
+      "name": "Problems Solved",
+      "question": "What pain points and prior-approach failures does it address?",
+      "status": "draft",
+      "answer": "Hand-written JSON fails in this domain for structural reasons, not because operators are careless.\n\n**Silent-accept tags.** `tags[i]` is the endpoint role for `functions[i]`. Ethernet omits the key. A tag list shorter than `functions` yields HTTP 200, the posted document returned unchanged, and zero forwarding. Confirmation requires clearing counters, sending traffic, and seeing zeros on egress. There is no error to grep.\n\n**Two VLAN families.** Putting a VLAN on an endpoint (`endpoints[].front_panel.vlan`) is the old schema. Putting it in the wrong function family is the most common authoring mistake. Swapping port1/port2 VLAN blocks silently swaps the two networks.\n\n**Inert but legal tunnels.** Incomplete encapsulation (no VLAN, no VNI/VSID, no outer header), tunnel headers left under old `vlan_endpoint_settings`, UDP ports on the tunnel settings instead of inside the header, and `routing_method` nested inside `protocols` all save and post; the device ignores the misplaced fields.\n\n**No place for topology.** The schema cannot record what a cable runs to (SNIC, server, test port). That mapping lives in spreadsheets disconnected from the file that is pushed.\n\n**Faceplate vs file.** A 32-cage column-paired plate is not recoverable from a name list. Prior practice: text editor, `curl -k -X POST`, metrics query/clear, OpenAPI, and after the schema break a Python CLI migrator (`uhd_migration.py`). This repo has no prior Keysight GUI that drew UHD Connect connections on the faceplate, kept JSON and canvas bidirectional, derived tags, or correlated live counters with the authored canvas.\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "introduction",
+      "name": "Background & Introduction",
+      "question": "What terminology and background does a reader need?",
+      "status": "draft",
+      "answer": "**Cage.** Physical QSFP-class opening, numbered 1\u201332.\n\n**Layer-1 profile.** Named speed / AN-or-manual / FEC block referenced by ports.\n\n**Connection.** JSON object with `endpoints` + `functions` joining two named ports or groups.\n\n**Function.** One layer of behaviour (`connect_ethernet`, `connect_arp`, `connect_vlan_vxlan`, `connect_vlan_nvgre`, `connect_ip`).\n\n**Tags.** Per-endpoint role list, positional with `functions`. Wrong length \u2192 silent no-forward.\n\n**Port1 / port2.** `endpoints[0]` / `endpoints[1]`. Drag origin is port1.\n\n**Draft.** UI-only incomplete encapsulation connection, amber, not in JSON.\n\n**Port group.** Several cages, one name; first member is the wire anchor.\n\n**`x_visualizer`.** Display-only top-level key this tool invented.\n\n**Silent accept.** Device HTTP 200 on a config that does not implement the intended forwarding.\n\n**Last-valid object.** The `state.config` graph retained when the textarea fails parse or `validate()`.\n\n**On canvas.** Device port name that also exists in the current visualizer config.\n\nFunction-type metadata (`app.js` 30\u201341):\n\n| Function | port1 tag | port2 tag | Empty body legal? |\n| --- | --- | --- | --- |\n| `connect_ethernet` | none | none | Yes (`ethertypes: []`) |\n| `connect_arp` | `vlan` | `vlan` | Yes |\n| `connect_vlan_vxlan` | `vlan` | `vxlan` | No \u2014 draft until complete |\n| `connect_vlan_nvgre` | `vlan` | `nvgre` | No \u2014 draft until complete |\n| `connect_ip` | none | none | Not authored; preserved read-only |\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "what_and_how",
+      "name": "How It Works",
+      "question": "How does the system work end to end?",
+      "status": "draft",
+      "answer": "The system is a browser page. There is no backend. `state.config` is a live JavaScript object graph. Canvas commits call `revalidate()` then `render(true)`, which serializes back to the textarea (scroll preserved). JSON typing is debounced (~220 ms): parse + validate; on failure do not replace `state.config`. On success, `state.config = parsed` and the canvas re-renders without rewriting the textarea, so the operator\u2019s formatting is kept until Format is clicked.\n\nAuthoring is ordered: Layer-1 profile \u2192 assign cages or a port group \u2192 drag cage to cage (origin = `endpoints[0]`) \u2192 pick function type. Ethernet/ARP commit immediately with `applyTags`. Encapsulation opens `state.draft`. A second function (`+ Ethernet`, `+ ARP`, `+ VLAN \u2194 VXLAN`, `+ VLAN \u2194 NVGRE`) is inserted into an existing connection in situ; the type picker is single-layer on purpose so Q-in-Q and double encap are modeled as an ordered function list. Swap ends reverses the endpoint pair and moves passthrough `vlan_endpoint_settings_port1`\u2194`port2` with it.\n\nLoading: Open/paste JSON; Convert old schema or `.http` export; Device \u2192 Pull \u2192 Load into canvas. Selecting a wire expands a VLAN/tunnel mapping badge. Warnings (overlap, unused profile, unconnected port, tag mismatch vs derived) appear under the JSON pane with a show-link that selects the object.\n\nDevice Push clones `state.config` and `delete body[X_KEY]` before POST (`app.js` 3507\u20133512). Counters poll every 3 s while the panel is open and stop when it closes. localStorage stores only device address and watched port names \u2014 never the configuration document.\n\n### System architecture (Fig. 100)\n\n```mermaid\ngraph TB\n    subgraph \"Operator station 100\"\n        Photo[\"Front-panel photograph 102\"]\n        Grid[\"Calibrated cage grid GEOM 104\"]\n        Canvas[\"Chassis canvas + SVG wires 106\"]\n        Insp[\"Inspector 108\"]\n        Text[\"JSON textarea 110\"]\n        Draft[\"Draft state 112\"]\n        Obj[\"Last-valid object graph state.config 114\"]\n    end\n    File[\"Configuration file 116\"] -->|\"open / save\"| Text\n    Device[\"Appliance API 118\"] -->|\"pull / push / counters\"| DevPanel[\"Device panel 120\"]\n    DevPanel -->|\"load running config\"| Text\n    Photo --> Grid\n    Grid --> Canvas\n    Obj -->|\"mutate in place\"| Canvas\n    Obj --> Insp\n    Canvas -->|\"drag origin = port1\"| Obj\n    Insp -->|\"field edits + applyTags 122\"| Obj\n    Text -->|\"debounce 220 ms\"| Parse{\"Parse + validate 124\"}\n    Parse -->|\"ok\"| Obj\n    Parse -->|\"fail\"| Lock[\"Lock canvas; keep 114 126\"]\n    Draft -->|\"commitDraft when draftMissing empty\"| Obj\n    Obj -->|\"serialize\"| Text\n    DevPanel -->|\"strip x_visualizer 128\"| Device\n\n    style Obj fill:#ff9,stroke:#333,stroke-width:2px\n    style Draft fill:#ff9,stroke:#333,stroke-width:2px\n    style Lock fill:#ff9,stroke:#333,stroke-width:2px\n```\n\nNote: Processor 114 / Draft 112 / Lock 126 are the inventive control points. Photograph 102 and textarea 110 exist in prior tools; the binding plus construction rules do not.\n\n### Processing pipeline (Fig. 300)\n\n```mermaid\nflowchart TD\n    Start([\"Step 302: Receive edit\"]) --> Kind{\"Step 304: Source?\"}\n    Kind -->|\"canvas / inspector\"| Mut[\"Step 306: Mutate state.config in place\"]\n    Kind -->|\"JSON text\"| Parse{\"Step 308: JSON.parse\"}\n    Parse -->|\"syntax error\"| Lock[\"Step 310: jsonValid=false; do not replace config\"]\n    Parse -->|\"ok\"| Val{\"Step 312: validate(cfg)\"}\n    Val -->|\"errors\"| Lock\n    Val -->|\"ok\"| Swap[\"Step 314: state.config = parsed\"]\n    Mut --> Tags[\"Step 316: applyTags via FN table\"]\n    Tags --> Reval[\"Step 318: revalidate + warnings\"]\n    Swap --> Reval\n    Reval --> Encap{\"Step 320: New encapsulation?\"}\n    Encap -->|\"yes, incomplete\"| Hold[\"Step 322: state.draft only; omit from connections\"]\n    Encap -->|\"no or complete\"| Ser[\"Step 324: serialize to textarea if canvas-origin\"]\n    Hold --> Draw[\"Step 326: Render amber draft + last-valid cages\"]\n    Ser --> Draw\n    Lock --> Draw\n    Draw --> Save{\"Step 328: Save or Push?\"}\n    Save -->|\"jsonValid false\"| Refuse[\"Step 330: Refuse\"]\n    Save -->|\"ok\"| Strip[\"Step 332: Strip x_visualizer on Push\"]\n    Strip --> Out([\"Step 334: File or device\"])\n\n    style Tags fill:#ff9,stroke:#333,stroke-width:2px\n    style Hold fill:#ff9,stroke:#333,stroke-width:2px\n    style Lock fill:#ff9,stroke:#333,stroke-width:2px\n```\n\n### Authoring sequence (Fig. 400)\n\n```mermaid\nsequenceDiagram\n    participant Op as Operator 402\n    participant UI as Canvas/Inspector 404\n    participant Cfg as state.config 406\n    participant Draft as state.draft 408\n    participant Dev as Appliance 410\n\n    Op->>UI: Assign cages; drag cage A to cage B\n    Note over UI: Drag origin becomes endpoints[0] (port1)\n    Op->>UI: Pick function type\n    alt Ethernet or ARP\n        UI->>Cfg: Push connection; applyTags(conn)\n        Cfg-->>UI: Serialize JSON\n    else VLAN to VXLAN or NVGRE\n        UI->>Draft: Store p1, p2, choice, seed udp_dst_port only\n        Draft-->>Op: Amber wire; Still needed list\n        Op->>Draft: Fill VLAN, VNI/VSID, outer MACs/IPs\n        Draft->>Cfg: commitDraft + applyTags\n    end\n    Op->>UI: Break JSON text\n    UI->>Cfg: Keep last-valid object; lock canvas\n    Op->>Dev: Push (only if jsonValid)\n    UI->>Dev: POST clone without x_visualizer\n    Dev-->>Op: HTTP 200\n    Op->>Dev: Query counters on names marked on canvas\n```\n\nVisual mapping: `UHDSchematic.png` is cropped to the faceplate band (`GEOM.cropTop` / `cropH`). `GEOM` is a percentage rectangle plus per-cell padding, measured from the 32 openings. Align-grid nudges those values live and Copy values emits a paste-ready `const GEOM = {\u2026}`. Wires exit the bottom of a cage, run in stacked lanes under the faceplate, and return up. Port-group wires attach to the first member (anchor); siblings highlight; intra-group drags are refused.\n\n---",
+      "diagrams": [
+        {
+          "type": "architecture",
+          "caption": "How It Works diagram 1",
+          "mermaid": "graph TB\n    subgraph \"Operator station 100\"\n        Photo[\"Front-panel photograph 102\"]\n        Grid[\"Calibrated cage grid GEOM 104\"]\n        Canvas[\"Chassis canvas + SVG wires 106\"]\n        Insp[\"Inspector 108\"]\n        Text[\"JSON textarea 110\"]\n        Draft[\"Draft state 112\"]\n        Obj[\"Last-valid object graph state.config 114\"]\n    end\n    File[\"Configuration file 116\"] -->|\"open / save\"| Text\n    Device[\"Appliance API 118\"] -->|\"pull / push / counters\"| DevPanel[\"Device panel 120\"]\n    DevPanel -->|\"load running config\"| Text\n    Photo --> Grid\n    Grid --> Canvas\n    Obj -->|\"mutate in place\"| Canvas\n    Obj --> Insp\n    Canvas -->|\"drag origin = port1\"| Obj\n    Insp -->|\"field edits + applyTags 122\"| Obj\n    Text -->|\"debounce 220 ms\"| Parse{\"Parse + validate 124\"}\n    Parse -->|\"ok\"| Obj\n    Parse -->|\"fail\"| Lock[\"Lock canvas; keep 114 126\"]\n    Draft -->|\"commitDraft when draftMissing empty\"| Obj\n    Obj -->|\"serialize\"| Text\n    DevPanel -->|\"strip x_visualizer 128\"| Device\n\n    style Obj fill:#ff9,stroke:#333,stroke-width:2px\n    style Draft fill:#ff9,stroke:#333,stroke-width:2px\n    style Lock fill:#ff9,stroke:#333,stroke-width:2px",
+          "reference_numeral_start": 100
+        },
+        {
+          "type": "flowchart",
+          "caption": "How It Works diagram 2",
+          "mermaid": "flowchart TD\n    Start([\"Step 302: Receive edit\"]) --> Kind{\"Step 304: Source?\"}\n    Kind -->|\"canvas / inspector\"| Mut[\"Step 306: Mutate state.config in place\"]\n    Kind -->|\"JSON text\"| Parse{\"Step 308: JSON.parse\"}\n    Parse -->|\"syntax error\"| Lock[\"Step 310: jsonValid=false; do not replace config\"]\n    Parse -->|\"ok\"| Val{\"Step 312: validate(cfg)\"}\n    Val -->|\"errors\"| Lock\n    Val -->|\"ok\"| Swap[\"Step 314: state.config = parsed\"]\n    Mut --> Tags[\"Step 316: applyTags via FN table\"]\n    Tags --> Reval[\"Step 318: revalidate + warnings\"]\n    Swap --> Reval\n    Reval --> Encap{\"Step 320: New encapsulation?\"}\n    Encap -->|\"yes, incomplete\"| Hold[\"Step 322: state.draft only; omit from connections\"]\n    Encap -->|\"no or complete\"| Ser[\"Step 324: serialize to textarea if canvas-origin\"]\n    Hold --> Draw[\"Step 326: Render amber draft + last-valid cages\"]\n    Ser --> Draw\n    Lock --> Draw\n    Draw --> Save{\"Step 328: Save or Push?\"}\n    Save -->|\"jsonValid false\"| Refuse[\"Step 330: Refuse\"]\n    Save -->|\"ok\"| Strip[\"Step 332: Strip x_visualizer on Push\"]\n    Strip --> Out([\"Step 334: File or device\"])\n\n    style Tags fill:#ff9,stroke:#333,stroke-width:2px\n    style Hold fill:#ff9,stroke:#333,stroke-width:2px\n    style Lock fill:#ff9,stroke:#333,stroke-width:2px",
+          "reference_numeral_start": 200
+        },
+        {
+          "type": "sequence",
+          "caption": "How It Works diagram 3",
+          "mermaid": "sequenceDiagram\n    participant Op as Operator 402\n    participant UI as Canvas/Inspector 404\n    participant Cfg as state.config 406\n    participant Draft as state.draft 408\n    participant Dev as Appliance 410\n\n    Op->>UI: Assign cages; drag cage A to cage B\n    Note over UI: Drag origin becomes endpoints[0] (port1)\n    Op->>UI: Pick function type\n    alt Ethernet or ARP\n        UI->>Cfg: Push connection; applyTags(conn)\n        Cfg-->>UI: Serialize JSON\n    else VLAN to VXLAN or NVGRE\n        UI->>Draft: Store p1, p2, choice, seed udp_dst_port only\n        Draft-->>Op: Amber wire; Still needed list\n        Op->>Draft: Fill VLAN, VNI/VSID, outer MACs/IPs\n        Draft->>Cfg: commitDraft + applyTags\n    end\n    Op->>UI: Break JSON text\n    UI->>Cfg: Keep last-valid object; lock canvas\n    Op->>Dev: Push (only if jsonValid)\n    UI->>Dev: POST clone without x_visualizer\n    Dev-->>Op: HTTP 200\n    Op->>Dev: Query counters on names marked on canvas",
+          "reference_numeral_start": 300
+        }
+      ],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "case_studies",
+      "name": "Case Studies",
+      "question": "What real scenarios demonstrate the invention?",
+      "status": "draft",
+      "answer": "### Case A \u2014 Symmetric VLAN passthrough (tags omitted by construction)\n\nSample `docs/samples/passthrough_single_symmetric/passthrough_single_symmetric.json`: profile `manual_400g_rs`; cages 25 and 26; one `connect_ethernet` with VLAN 101 on both `vlan_endpoint_settings_port1` and `_port2`. `deriveTags` yields two empty arrays; `applyTags` deletes `tags`. A hand-authored leftover `tags: [\"vlan\"]` on Ethernet would be a mismatch warning; editing the connection in-canvas rewrites it away.\n\n### Case B \u2014 VLAN \u2194 VXLAN (tags required; silent-accept if wrong)\n\nSample `docs/samples/encap_single_vlan_vxlan/encap_single_vlan_vxlan.json`: ingress `tags: [\"vlan\"]`, egress `tags: [\"vxlan\"]`; VLAN 101, VNI 7001, full `outgoing_vxlan_header`. If those tags are omitted or swapped, the device accepts POST and forwards nothing. The visualizer never offers a tags field. `createConnection` holds a draft until `draftMissing` is empty, then `commitDraft` \u2192 `applyTags` writes exactly this pair.\n\n### Case C \u2014 Last-valid lock during a JSON typo\n\nOperator pastes a broken comma into the textarea. `applyJsonText` catches `JSON.parse`, sets `jsonValid = false`, leaves `state.config` as the VXLAN object from Case B. The amber/red lock banner states the chassis still shows the last valid configuration. Save and Push toast \u201cFix the JSON errors\u2026\u201d. Revert restores the serialized last-valid object.\n\n### Case D \u2014 Legacy `vlan_double` migration\n\nConvert runs `migrate.js`. A legacy endpoint with `vlan_double` becomes two stacked functions, outer first. `collapseEndpoints` drops `function_N` marker tags and emits one tag per function per port. The rebuilt document is then loadable onto the canvas; subsequent edits go through `applyTags` rather than the legacy markers.\n\n```mermaid\nflowchart LR\n    A[\"Step 502: Open encap sample\"] --> B[\"Step 504: Canvas draws cages 25-26\"]\n    B --> C[\"Step 506: Badge shows VLAN 101 to VNI 7001\"]\n    C --> D{\"Step 508: Tags vs FN table\"}\n    D -->|\"match\"| E[\"Step 510: No tag warning\"]\n    D -->|\"mismatch\"| F[\"Step 512: Warning + show-link\"]\n    E --> G[\"Step 514: Pull counters; names marked on canvas\"]\n    F --> H[\"Step 516: Edit connection; applyTags rewrites\"]\n    H --> G\n\n    style D fill:#ff9,stroke:#333,stroke-width:2px\n    style H fill:#ff9,stroke:#333,stroke-width:2px\n```\n\n---",
+      "diagrams": [
+        {
+          "type": "flowchart",
+          "caption": "Case Studies diagram 1",
+          "mermaid": "flowchart LR\n    A[\"Step 502: Open encap sample\"] --> B[\"Step 504: Canvas draws cages 25-26\"]\n    B --> C[\"Step 506: Badge shows VLAN 101 to VNI 7001\"]\n    C --> D{\"Step 508: Tags vs FN table\"}\n    D -->|\"match\"| E[\"Step 510: No tag warning\"]\n    D -->|\"mismatch\"| F[\"Step 512: Warning + show-link\"]\n    E --> G[\"Step 514: Pull counters; names marked on canvas\"]\n    F --> H[\"Step 516: Edit connection; applyTags rewrites\"]\n    H --> G\n\n    style D fill:#ff9,stroke:#333,stroke-width:2px\n    style H fill:#ff9,stroke:#333,stroke-width:2px",
+          "reference_numeral_start": 100
+        }
+      ],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "pseudocode",
+      "name": "Pseudocode",
+      "question": "What is the language-agnostic algorithm?",
+      "status": "draft",
+      "answer": "```\nFN = {\n  connect_ethernet:   { tag1: None,   tag2: None },\n  connect_arp:        { tag1: \"vlan\", tag2: \"vlan\" },\n  connect_vlan_vxlan: { tag1: \"vlan\", tag2: \"vxlan\" },\n  connect_vlan_nvgre: { tag1: \"vlan\", tag2: \"nvgre\" }\n}\n\nfunction deriveTags(conn):\n    t1, t2 = [], []\n    for fn in conn.functions:\n        d = FN[fn.choice]\n        if d.tag1: t1.append(d.tag1)\n        if d.tag2: t2.append(d.tag2)\n    return t1, t2\n\nfunction applyTags(conn):\n    if len(conn.endpoints) != 2: return\n    t1, t2 = deriveTags(conn)\n    for i, tags in enumerate([t1, t2]):\n        if tags: conn.endpoints[i].tags = tags\n        else: delete conn.endpoints[i].tags\n\nfunction applyJsonText(text):\n    try parsed = JSON.parse(text)\n    except: jsonValid = False; return          # keep last-valid config\n    v = validate(parsed)\n    if v.errors:\n        jsonValid = False; return              # keep last-valid config\n    config = parsed\n    jsonValid = True\n    render(rewrite_textarea=False)\n\nfunction createConnection(port1, port2, choice):\n    if choice in {vxlan, nvgre}:\n        draft = { p1: port1, p2: port2, choice, data: seed_udp_only }\n        return                                 # not in config.connections\n    conn = { endpoints: [{port_name: port1}, {port_name: port2}],\n             functions: [{ choice, body: empty_legal_body(choice) }] }\n    applyTags(conn)\n    config.connections.append(conn)\n\nfunction commitDraft(draft):\n    if draftMissing(draft): return             # VLAN, tunnel id, 4 header addrs\n    conn = materialize(draft)\n    applyTags(conn)\n    config.connections.append(conn)\n    draft = None\n\nfunction pushToDevice(config):\n    if not jsonValid: refuse\n    body = deep_copy(config)\n    delete body[\"x_visualizer\"]\n    HTTP POST /connect/api/v1/config\n```\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "data_structures",
+      "name": "Data Structures",
+      "question": "What schemas and relationships does the invention use?",
+      "status": "draft",
+      "answer": "The live model is one JSON object with three device-owned sections plus one optional visualizer extension.\n\n**`state` (runtime, `app.js` 106\u2013127).** Holds `config` (last-valid object), `jsonValid`, `jsonErrors`, `warnings`, `draft`, `drag`, `groupPick`, `sel`, `align`, `zoom`. `draft` is `{ p1, p2, choice, data }` and is not a schema field.\n\n**`FN` (static metadata).** Per-choice label, authored flag, and `tag1`/`tag2`. This table is the sole source of tag letters. Changing it changes every derived document.\n\n**Device document.**\n\n- `profiles.layer_1_profiles[]`: `{ name, choice, link_speed, autonegotiation|manual.fec_mode }`\n- `front_panel_ports[]`: either `front_panel_port` `{ front_panel_port, channel, layer_1_profile_name }` or `port_group` `{ ingress_distribution, ports[] }`\n- `connections[]`: `{ name, endpoints[{ port_name, tags? }], functions[{ choice, <choice>: body }] }`\n\n**`x_visualizer` (optional).** `{ _comment, outside: { <port_name>: { label?, kind?, hidden?, note? } } }`. Written only when `outsideOf(name).custom` is true. `pruneOutside` deletes the key when the last override goes.\n\n**Validation split.** Errors lock the canvas (bad types, duplicate names, port out of 1\u201332, unknown refs, breakout, <2 endpoints, unknown function, missing required encap blocks). Warnings do not lock (name pattern, unused profiles, unconnected assigned cages, overlapping `vlanKey`+`tunnelKey` on one port, tag mismatch vs derived, malformed/orphan `x_visualizer`).\n\n**GEOM.** `{ x, y, w, h, padX, padY, cropTop, cropH }` \u2014 percentage hit-targets plus pixel crop. Not stored in the configuration file; Align-grid exports source for a new photograph.\n\n```mermaid\nerDiagram\n    CONFIG ||--o{ L1_PROFILE : contains\n    CONFIG ||--o{ PORT_OBJECT : contains\n    CONFIG ||--o{ CONNECTION : contains\n    CONFIG ||--o| X_VISUALIZER : \"optional pruned extension\"\n    PORT_OBJECT ||--o| FRONT_PANEL_PORT : \"choice front_panel_port\"\n    PORT_OBJECT ||--o| PORT_GROUP : \"choice port_group\"\n    PORT_GROUP ||--|{ GROUP_MEMBER : \"ports[] first is anchor\"\n    CONNECTION ||--|{ ENDPOINT : \"exactly two for edits\"\n    CONNECTION ||--|{ FUNCTION : \"ordered; functions[0] is outer\"\n    ENDPOINT }o--|| PORT_OBJECT : \"port_name\"\n    FUNCTION }o--o| TAG_SLOT : \"positional tags[i] for functions[i]\"\n    X_VISUALIZER ||--o{ OUTSIDE_BOX : \"keyed by port name\"\n    RUNTIME_STATE ||--|| CONFIG : \"last-valid graph\"\n    RUNTIME_STATE ||--o| DRAFT : \"withheld from CONFIG\"\n\n    CONFIG {\n        object profiles\n        array front_panel_ports\n        array connections\n    }\n    ENDPOINT {\n        string port_name\n        array tags\n    }\n    FUNCTION {\n        string choice\n        object body\n    }\n    DRAFT {\n        string p1\n        string p2\n        string choice\n        object data\n    }\n```\n\n---",
+      "diagrams": [
+        {
+          "type": "er",
+          "caption": "Data Structures diagram 1",
+          "mermaid": "erDiagram\n    CONFIG ||--o{ L1_PROFILE : contains\n    CONFIG ||--o{ PORT_OBJECT : contains\n    CONFIG ||--o{ CONNECTION : contains\n    CONFIG ||--o| X_VISUALIZER : \"optional pruned extension\"\n    PORT_OBJECT ||--o| FRONT_PANEL_PORT : \"choice front_panel_port\"\n    PORT_OBJECT ||--o| PORT_GROUP : \"choice port_group\"\n    PORT_GROUP ||--|{ GROUP_MEMBER : \"ports[] first is anchor\"\n    CONNECTION ||--|{ ENDPOINT : \"exactly two for edits\"\n    CONNECTION ||--|{ FUNCTION : \"ordered; functions[0] is outer\"\n    ENDPOINT }o--|| PORT_OBJECT : \"port_name\"\n    FUNCTION }o--o| TAG_SLOT : \"positional tags[i] for functions[i]\"\n    X_VISUALIZER ||--o{ OUTSIDE_BOX : \"keyed by port name\"\n    RUNTIME_STATE ||--|| CONFIG : \"last-valid graph\"\n    RUNTIME_STATE ||--o| DRAFT : \"withheld from CONFIG\"\n\n    CONFIG {\n        object profiles\n        array front_panel_ports\n        array connections\n    }\n    ENDPOINT {\n        string port_name\n        array tags\n    }\n    FUNCTION {\n        string choice\n        object body\n    }\n    DRAFT {\n        string p1\n        string p2\n        string choice\n        object data\n    }",
+          "reference_numeral_start": 100
+        }
+      ],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "implementation",
+      "name": "Implementation Details",
+      "question": "What architecture decisions and tradeoffs matter?",
+      "status": "draft",
+      "answer": "**In-place mutation.** Header comment of `app.js`: the parsed JSON object is mutated so fields the UI does not author survive. `getPath` / `setPath` / `delPath` edit subtrees. `clone` is used only when a snapshot is required (draft materialize, device push). This is a deliberate rejection of form-regenerate-from-schema, which would drop `mirror_to`, PFC, pause, `switchover_port`, and `connect_ip`.\n\n**Tag application scope.** `applyTags` runs only on a connection the UI just edited (`app.js` 288\u2013297). Loaded files are not rewritten until the operator edits that connection. `computeWarnings` compares stored tags to `deriveTags` and offers a show-link. Roundtrip tests assert derived tags equal the tags in the eleven shipped samples.\n\n**Draft vs second function.** A *first* encap connection is a draft. A *second* function added to an existing connection is inserted into JSON immediately, even if empty. Tutorials warn to finish it in the same sitting. That asymmetry is intentional: the silent-accept risk is posting a brand-new inert tunnel as the only function; a second layer on an already-forwarding connection is a different operator task.\n\n**Port groups.** First array element is the geometric anchor. Visual: main = red inner edge; members = dashed border. A cage in more than one object gets a red corner dot. `ingress_distribution` is `copy` (default) or `split`. Dragging from a group cage creates a connection on the group name, not the member number.\n\n**Breakout and multi-endpoint.** `channel != 1` or `num_channels != 0` or two plain entries on one cage: validation sets `meta.breakout`, canvas locks, explicit message. More than two endpoints: drawn and listed, read-only. `connect_ip`: preserved, not in the type picker.\n\n**file:// embodiment.** Tutorials are compiled into `tutorials.js` because `file://` cannot fetch sibling markdown. No npm runtime. `tools/roundtrip-test.cjs` proves sample round-trip, tag derivation, lossless serialize/parse, breakout refuse, and `x_visualizer` prune. Treat the five-file layout as an embodiment, not the independent claim.\n\n**Calibration.** Align-grid mutates `GEOM` live (`app.js` 2741\u20132747) and copies a source literal. This decouples the photograph from hit-testing without a rebuild.\n\n```mermaid\ngraph LR\n    subgraph \"UI 600\"\n        Cage[\"Cage hit-target 602\"]\n        Insp[\"Inspector controls 604\"]\n        TA[\"JSON textarea 606\"]\n        Align[\"Align-grid 608\"]\n    end\n    subgraph \"Model 610\"\n        FN[\"FN tag table 612\"]\n        Val[\"validate / computeWarnings 614\"]\n        Tags[\"deriveTags / applyTags 616\"]\n        Draft[\"draftMissing / commitDraft 618\"]\n        Cfg[\"state.config 620\"]\n        Mig[\"migrate.js collapseEndpoints 622\"]\n    end\n    subgraph \"I/O 630\"\n        Disk[\"Local file 632\"]\n        API[\"Device REST 634\"]\n        Metrics[\"Counters query 636\"]\n    end\n    Cage --> Tags\n    Insp --> Tags\n    Tags --> Cfg\n    TA --> Val\n    Val --> Cfg\n    Draft --> Cfg\n    Align --> Cage\n    Mig --> Cfg\n    Cfg --> Disk\n    Cfg -->|\"strip x_visualizer\"| API\n    API --> Metrics\n    Cfg -->|\"name match = on canvas\"| Metrics\n\n    style FN fill:#ff9,stroke:#333,stroke-width:2px\n    style Tags fill:#ff9,stroke:#333,stroke-width:2px\n    style Draft fill:#ff9,stroke:#333,stroke-width:2px\n```\n\n---",
+      "diagrams": [
+        {
+          "type": "other",
+          "caption": "Implementation Details diagram 1",
+          "mermaid": "graph LR\n    subgraph \"UI 600\"\n        Cage[\"Cage hit-target 602\"]\n        Insp[\"Inspector controls 604\"]\n        TA[\"JSON textarea 606\"]\n        Align[\"Align-grid 608\"]\n    end\n    subgraph \"Model 610\"\n        FN[\"FN tag table 612\"]\n        Val[\"validate / computeWarnings 614\"]\n        Tags[\"deriveTags / applyTags 616\"]\n        Draft[\"draftMissing / commitDraft 618\"]\n        Cfg[\"state.config 620\"]\n        Mig[\"migrate.js collapseEndpoints 622\"]\n    end\n    subgraph \"I/O 630\"\n        Disk[\"Local file 632\"]\n        API[\"Device REST 634\"]\n        Metrics[\"Counters query 636\"]\n    end\n    Cage --> Tags\n    Insp --> Tags\n    Tags --> Cfg\n    TA --> Val\n    Val --> Cfg\n    Draft --> Cfg\n    Align --> Cage\n    Mig --> Cfg\n    Cfg --> Disk\n    Cfg -->|\"strip x_visualizer\"| API\n    API --> Metrics\n    Cfg -->|\"name match = on canvas\"| Metrics\n\n    style FN fill:#ff9,stroke:#333,stroke-width:2px\n    style Tags fill:#ff9,stroke:#333,stroke-width:2px\n    style Draft fill:#ff9,stroke:#333,stroke-width:2px",
+          "reference_numeral_start": 100
+        }
+      ],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "alternatives",
+      "name": "Alternatives & Comparison",
+      "question": "How does this compare with known approaches?",
+      "status": "draft",
+      "answer": "| Approach | What it does | Why it fails here |\n| --- | --- | --- |\n| Text editor + curl | Operator types the document and POSTs it | Cannot see cages; cannot derive tags; silent 200 is invisible |\n| Generic JSON Schema form | Renders fields from the OpenAPI document | Would expose `tags` as editable arrays (the failure mode); would regenerate objects and drop unknown keys; no faceplate |\n| Switch/router port GUI | Lights ports, draws LAGs | No function-centric positional tag model; no silent-accept API; no dual-view last-valid lock |\n| SDN / NSX / ACI canvas | Logical topology | Not bound to a 32-cage photograph or this schema; does not withhold incomplete tunnels from the posted document |\n| DCIM (NetBox, Device42) | Ports on rack images | Inventory, not a live mutating config object with derived tags |\n| UML / draw.io codegen | Diagram is the source | Lossy one-way generation; no appliance silent-accept rules |\n| CLI migrator alone (`uhd_migration.py`) | Old \u2192 new schema | No visual lock, no draft withhold, no live counters, no bidirectional authoring |\n| Always-rewrite tags on load | Force `applyTags` on every open | Would mutate vendor samples on sight; the implementation warns instead and rewrites only on edit, preserving byte-identity until the operator changes that connection |\n\nThe non-obvious combination is: derive tags from function metadata (never from user input), freeze the last-valid graph when text is illegal, and keep incomplete encapsulation off the serializable document while still drawing it on the physical model.\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "prior_art",
+      "name": "Prior Art",
+      "question": "What related patents, papers, or products is the inventor aware of?",
+      "status": "draft",
+      "answer": "These are **search seeds from `prodinfo.md` \u00a77**, not a clearance opinion. No web prior-art search was run (inventor-awareness rule). Counsel should search:\n\n- Chassis / faceplate GUIs (Cisco, Juniper, Arista port views; SAN zoning; patch-panel visualizers)\n- JSON/YAML visual editors and JSON Schema form UIs\n- SDN / NFV composers (Neutron, ONOS, ACI, NSX)\n- Test-equipment GUIs (IxNetwork, BreakingPoint, Vision/NPB, CloudLens)\n- Bidirectional code/diagram sync (UML round-trip)\n- Overlay of hit-targets on equipment photos (rack elevation, DCIM)\n- Schema migration of network configs (YANG/XML migrators)\n- Config linters for accepted-but-inert device APIs\n\n**Closest expected hits and argued differences.** A chassis photo with clickable ports is known. A JSON form is known. A migrator is known. The argued distinction is the *construction* of positional role tags from an ordered function-type table aimed at a silent-success API, plus last-valid visual lock and withheld drafts on the same object graph, optionally with live counter correlation on canvas names and a pruned display-only extension that is stripped on push.\n\n**Host-API schema change (2026-07-28)** is not this invention; it created the need.\n\n**Related Keysight products (for \u201crelated art / productization\u201d):** UHD Connect appliance and on-box samples; other NPB/TAP GUIs (PM to list); IxNetwork (this tool does not generate IxNetwork configs today).\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    },
+    {
+      "id": "claims",
+      "name": "Draft Patent Claims",
+      "question": "What are the draft independent and dependent claims?",
+      "status": "draft",
+      "answer": "### Independent claims\n\n1. A method for authoring a connectivity configuration of a multi-port appliance, comprising:\n   receiving a structured configuration document that includes an ordered list of connection functions and a corresponding list of endpoints;\n   displaying a visual model of a physical front panel of the appliance, the visual model including a plurality of cage hit-targets registered to a front-panel image;\n   in response to a visual authoring action that designates two cages and a function type, mutating a last-valid configuration object so that a first designated cage is stored as a first endpoint;\n   automatically computing, from a function-type metadata table and the ordered list of connection functions, a positional role-tag array for each endpoint, wherein an *i*-th tag identifies a role of that endpoint with respect to an *i*-th function;\n   writing the computed role-tag arrays into the configuration object, or omitting a tags key when the computed array is empty;\n   withholding an incomplete encapsulation connection from the serializable configuration object while still rendering that connection on the visual model until a determined set of required fields is present; and\n   when a parallel text representation of the configuration fails syntactic or semantic validation, continuing to render the last-valid configuration object and disabling visual mutation and commit of the text representation until validation succeeds.\n\n2. A system for bidirectional visual authoring of a connectivity-appliance configuration, comprising:\n   a processor; and\n   a memory storing instructions that, when executed by the processor, cause the system to:\n   maintain a last-valid configuration object as a single source of truth;\n   overlay a calibrated cage grid on a front-panel image and render connections from the last-valid configuration object onto the grid;\n   accept either a visual edit or a text edit of the same object;\n   derive positional endpoint role tags from an ordered function list using a function-type metadata table rather than from operator-typed tag fields; and\n   refuse file save and device publish while a text buffer is invalid, without replacing the last-valid configuration object.\n\n3. A non-transitory computer-readable medium storing instructions that, when executed by a processor, cause the processor to perform operations comprising:\n   mapping a structured connectivity configuration onto a visual model of a physical front panel;\n   synthesizing positional endpoint role tags from connection-function types;\n   retaining a last-valid object graph when a parallel text buffer is invalid; and\n   omitting an incomplete encapsulation connection from a serializable document until required tunnel fields are present.\n\n### Dependent claims\n\n4. The method of claim 1, wherein the function-type metadata table associates a passthrough Ethernet function with empty tags and associates an encapsulation function with a first-endpoint role of virtual LAN and a second-endpoint role of a tunnel type.\n\n5. The method of claim 1, wherein the visual authoring action is a drag between cage hit-targets and a drag origin is stored as the first endpoint.\n\n6. The method of claim 1, wherein the determined set of required fields comprises a virtual LAN identifier, a tunnel identifier, and outer-header source and destination media-access-control and internet-protocol addresses.\n\n7. The method of claim 1, further comprising storing operator topology annotations in a well-known extension key that is omitted when empty and stripped from a payload sent to the appliance.\n\n8. The method of claim 1, further comprising warning when a stored tag array disagrees with a tag array computed from the function-type metadata table, and selecting the corresponding visual connection in response to the warning.\n\n9. The method of claim 1, further comprising querying appliance port counters and marking device port names that also exist in the last-valid configuration object.\n\n10. The method of claim 1, further comprising transforming a prior schema in which virtual LAN identifiers were stored on endpoints and tags included per-function marker values into the ordered-function model, including splitting a double-tag endpoint into two stacked functions with an outer function first.\n\n11. The method of claim 1, wherein a port group comprising a plurality of cages is represented as a single named endpoint and a connection wire is geometrically anchored to a first member of the port group.\n\n12. The method of claim 1, further comprising presenting a live calibration control that adjusts overlay geometry parameters relative to the front-panel image and exports the parameters into an overlay definition.\n\n13. The system of claim 2, wherein the instructions further cause the system to mutate the last-valid configuration object in place so that keys not authored by a graphical control remain present across unrelated edits.\n\n14. The system of claim 2, wherein an empty Ethernet or address-resolution-protocol function is committed immediately and an empty encapsulation function is held in a draft state.\n\n15. The computer-readable medium of claim 3, wherein the operations further comprise stacking a second function on an existing two-endpoint connection to represent double-tag or double-encapsulation behaviour without introducing a distinct connection type.\n\n---",
+      "diagrams": [],
+      "code_references": [],
+      "qc_status": "pending",
+      "qc_notes": "Multi-agent QC skipped; local-only draft at inventor request."
+    }
+  ],
+  "claim_to_code_mapping": [
+    {
+      "claim_number": 1,
+      "element": "cage hit-targets on front-panel image",
+      "implementation": "GEOM / portToCell / cage render",
+      "file": "app.js",
+      "lines": "54-61, 101-102, 993-1002"
+    },
+    {
+      "claim_number": 1,
+      "element": "drag origin stored as first endpoint",
+      "implementation": "createConnection / dragObjectForCage",
+      "file": "app.js",
+      "lines": "264-268, 2047-2074"
+    },
+    {
+      "claim_number": 1,
+      "element": "positional role tags from function table",
+      "implementation": "FN / deriveTags / applyTags",
+      "file": "app.js",
+      "lines": "30-41, 278-297"
+    },
+    {
+      "claim_number": 1,
+      "element": "withhold incomplete encapsulation",
+      "implementation": "state.draft / draftMissing / commitDraft",
+      "file": "app.js",
+      "lines": "114, 1836-1858, 1954-1968"
+    },
+    {
+      "claim_number": 1,
+      "element": "last-valid lock",
+      "implementation": "applyJsonText / save and push guards",
+      "file": "app.js",
+      "lines": "723-766, 2231, 3497"
+    },
+    {
+      "claim_number": 2,
+      "element": "in-place last-valid object",
+      "implementation": "state.config / commit / setPath",
+      "file": "app.js",
+      "lines": "1-6, 106-108, 714-721"
+    },
+    {
+      "claim_number": 7,
+      "element": "pruned extension stripped on push",
+      "implementation": "X_KEY / pruneOutside / devPush",
+      "file": "app.js",
+      "lines": "141-199, 3507-3512"
+    },
+    {
+      "claim_number": 10,
+      "element": "legacy positional-tag migration",
+      "implementation": "collapseEndpoints / vlan_double split",
+      "file": "migrate.js",
+      "lines": "68-91, 231-288"
+    }
+  ],
+  "qc_assessment": {
+    "patent_committee_rubric": {
+      "technical_merit": {
+        "score": 2,
+        "justification": "Tag derivation + last-valid lock + withheld draft is a real mechanism; skeptic can still call pieces good UX."
+      },
+      "alternatives": {
+        "score": 3,
+        "justification": "Chassis GUIs, JSON forms, DCIM, CLI migrators exist. Differentiator is the combination."
+      },
+      "value_to_company": {
+        "score": 2,
+        "justification": "Directly protects UHD Connect JSON workflow; productization unconfirmed."
+      },
+      "infringement_detection": {
+        "score": 2,
+        "justification": "Faceplate + auto tags visible in product; exact freeze/draft mechanics may need teardown."
+      }
+    },
+    "cross_section_consistency": "Novelty, How It Works, Pseudocode, and Claims all center on deriveTags/applyTags, applyJsonText lock, and state.draft withhold.",
+    "diagram_validation": "Architecture, pipeline, sequence in \u00a76; ER in \u00a79; component graph in \u00a710; case walkthrough in \u00a77. mmdc not installed at generation time.",
+    "claims_assessment": "3 independents (method/system/CRM) + 12 dependents. No product trade names in claim body. Core is tag synthesis + lock + draft.",
+    "prioritized_improvements": [
+      "Confirm legal inventors and migrate.js co-inventor",
+      "Confirm GitHub public date before any filing",
+      "Run counsel prior-art search on chassis GUIs + JSON forms + silent-accept linters",
+      "Optional: run multi-agent QC once inventor reviews this draft"
+    ],
+    "overall_assessment": "Attorney-usable local draft. Do not treat as filed. Public GitHub is the critical clock."
+  }
+}
