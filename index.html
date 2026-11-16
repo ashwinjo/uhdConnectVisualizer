@@ -475,6 +475,36 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .cage.gpickok:hover { border-color: #fff; background: #ffffff24; color: #fff; }
 .cage.gpickno { opacity: .38; cursor: not-allowed; }
 .cage.aligning { border-color: var(--red-soft); background: #e8112d33; color: #fff; }
+/* breakout: outer container is non-interactive; inner sublane buttons are the click targets */
+.cage.breakout { cursor: default; align-items: stretch; justify-content: flex-start; }
+.cage.breakout:hover { background: #00000055; border-color: #ffffff2e; }
+.sublane {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+  border-top: 1px solid #ffffff15;
+  background: transparent;
+  color: #ffffff5c;
+  font-family: var(--mono);
+  font-size: 6.5px;
+  font-weight: 500;
+  padding: 0 1px;
+  transition: background .15s var(--ease);
+  user-select: none;
+  box-sizing: border-box;
+}
+.sublane:first-child { border-top: none; }
+.sublane.sl-assigned { color: #ffffffd6; background: #ffffff0e; }
+.sublane:hover { background: #ffffff20; }
+.sublane.sl-sel { background: #e8112d3d; color: #fff; box-shadow: inset 0 0 0 1px var(--red); }
+.sublane.sl-inconn { background: #e8112d20; }
+.sublane.sl-dragsrc { background: #e8112d55; }
+#portLayer.noNames .sublane .cnm { display: none; }
 
 #wireSvg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 1; }
 #chassisWell.dragging #chassisCrop { z-index: 0; }

@@ -114,14 +114,15 @@ for (const name of IN_SCOPE) {
   ok(Array.isArray(w), name + ': warnings computed (' + w.length + ')');
 }
 
-/* ---------- 2. breakout refusal ---------- */
-console.log('\nBreakout samples (must be refused)');
+/* ---------- 2. breakout display ---------- */
+console.log('\nBreakout samples (now supported with sub-lane display)');
 for (const name of BREAKOUT) {
   const cfg = loadSample(name);
   const v = A.validate(cfg);
-  ok(v.errors.length > 0 && v.meta.breakout === true, name + ': refused as breakout',
+  ok(v.errors.length === 0 && v.meta.breakout === true, name + ': validates with breakout flag set',
     'errors: ' + v.errors.length + ' breakout flag: ' + v.meta.breakout);
-  ok(v.errors.some(e => /breakout/i.test(e)), name + ': error message names breakout');
+  const w = A.computeWarnings(cfg, v.meta);
+  ok(w.some(w => /breakout/i.test(w.text)), name + ': breakout warning present');
 }
 
 /* ---------- 3. authoring path reproduces a sample ---------- */
@@ -268,13 +269,17 @@ const gbad = [
   ['a group member with an unknown profile', cfg => { cfg.front_panel_ports[0].port_group.ports[0].layer_1_profile_name = 'nope'; }],
   ['the same port twice in one group', cfg => { cfg.front_panel_ports[0].port_group.ports[1].front_panel_port = 11; }],
   ['a bad ingress_distribution', cfg => { cfg.front_panel_ports[0].port_group.ingress_distribution = 'roundrobin'; }],
-  ['a breakout channel inside a group', cfg => { cfg.front_panel_ports[0].port_group.ports[0].channel = 2; }]
 ];
 for (const [label, mutate] of gbad) {
   const c = groupCfg();
   mutate(c);
   ok(A.validate(c).errors.length > 0, 'rejects ' + label);
 }
+// breakout channel inside a group: no error, sets breakout flag
+const gbkOut = groupCfg();
+gbkOut.front_panel_ports[0].port_group.ports[0].channel = 2;
+const gbkV = A.validate(gbkOut);
+ok(gbkV.errors.length === 0 && gbkV.meta.breakout === true, 'breakout channel in group sets flag, not error');
 
 // a group with no drawable port stays read-only, with a reason that says so
 const noAnchor = groupCfg();

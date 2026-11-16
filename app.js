@@ -455,14 +455,7 @@ function validate(cfg) {
           if (!Number.isInteger(n) || n < 1 || n > PORT_COUNT) errors.push(mat + '.front_panel_port must be an integer from 1 to 32.');
           if (typeof m.layer_1_profile_name !== 'string' || !m.layer_1_profile_name) errors.push(mat + ' needs a layer_1_profile_name.');
           else if (!meta.profileNames.has(m.layer_1_profile_name)) errors.push(mat + '.layer_1_profile_name "' + m.layer_1_profile_name + '" does not match any Layer 1 profile.');
-          if (m.channel !== undefined && m.channel !== 1) {
-            meta.breakout = true;
-            errors.push(mat + ': channel ' + m.channel + ' is a breakout channel. This tool does not support breakout.');
-          }
-          if (m.num_channels !== undefined && m.num_channels !== 0) {
-            meta.breakout = true;
-            errors.push(mat + ': num_channels ' + m.num_channels + ' is a breakout setting. This tool does not support breakout.');
-          }
+          if (m.channel !== undefined || m.num_channels !== undefined) meta.breakout = true;
           if (!Number.isInteger(n)) return;
           if (nums.includes(n)) { errors.push(mat + ': front-panel port ' + n + ' is already in this group.'); return; }
           nums.push(n);
@@ -482,19 +475,10 @@ function validate(cfg) {
       if (!Number.isInteger(n) || n < 1 || n > PORT_COUNT) errors.push(at + '.front_panel_port.front_panel_port must be an integer from 1 to 32.');
       if (typeof fp.layer_1_profile_name !== 'string' || !fp.layer_1_profile_name) errors.push(at + ' needs a layer_1_profile_name.');
       else if (!meta.profileNames.has(fp.layer_1_profile_name)) errors.push(at + '.layer_1_profile_name "' + fp.layer_1_profile_name + '" does not match any Layer 1 profile.');
-      if (fp.channel !== undefined && fp.channel !== 1) {
-        meta.breakout = true;
-        errors.push(at + ': channel ' + fp.channel + ' is a breakout channel. This tool does not support breakout.');
-      }
-      if (fp.num_channels !== undefined && fp.num_channels !== 0) {
-        meta.breakout = true;
-        errors.push(at + ': num_channels ' + fp.num_channels + ' is a breakout setting. This tool does not support breakout.');
-      }
+      if (fp.channel !== undefined || fp.num_channels !== undefined) meta.breakout = true;
       if (Number.isInteger(n)) {
-        if (meta.portByNum.has(n)) {
-          meta.breakout = true;
-          errors.push(at + ': front-panel port ' + n + ' is already used by "' + meta.portByNum.get(n).entry.name + '". Several entries on one port is breakout, which this tool does not support.');
-        } else meta.portByNum.set(n, { entry: e, index: i });
+        if (meta.portByNum.has(n)) meta.breakout = true;
+        else meta.portByNum.set(n, { entry: e, index: i });
       }
       if (typeof e.name === 'string') {
         meta.portByName.set(e.name, { entry: e, index: i, num: n });
@@ -502,10 +486,13 @@ function validate(cfg) {
           name: e.name, kind: 'port', entry: e, index: i,
           anchorNum: Number.isInteger(n) ? n : null, memberNums: Number.isInteger(n) ? [n] : []
         });
-        claim(n, { name: e.name, kind: 'port', entry: e, index: i, rank: 0 });
+        claim(n, { name: e.name, kind: 'port', entry: e, index: i, rank: 0, channel: fp.channel != null ? fp.channel : 0 });
       }
     });
-    for (const occ of meta.cages.values()) occ.sort((a, b) => a.rank - b.rank);
+    for (const occ of meta.cages.values()) occ.sort((a, b) => {
+    if (a.kind === 'port' && b.kind === 'port') return (a.channel || 0) - (b.channel || 0);
+    return a.rank - b.rank;
+  });
   }
 
   const cs = cfg.connections;
@@ -582,6 +569,9 @@ function tunnelKey(label, v, single) {
 
 function computeWarnings(cfg, meta) {
   const w = [];
+  if (meta.breakout) {
+    w.push({ text: 'This config uses breakout channels (channel / num_channels). The canvas shows all channels collapsed onto their physical cage — wires from different channels on the same cage will overlap. Editing breakout port assignments on the canvas is not supported.', sel: null });
+  }
   for (const issue of meta.nameIssues || []) {
     w.push({ text: issue + ' The device may still accept it (docs/samples/passthrough_single_non_vlan does this), so it is not blocked \u2014 but names created here stay inside the pattern.', sel: null });
   }
@@ -1022,12 +1012,34 @@ function renderChassis() {
       if (state.drag.fromNum === n) cls.push('dragsrc');
       else if (!primary) cls.push('dragno');
     }
-    html += '<button class="' + cls.join(' ') + '" data-num="' + n + '" title="' + esc(cageTitle(n, occ)) + '" style="left:'
-      + (cellL + padX).toFixed(3) + '%;top:' + (cellT + padY).toFixed(3) + '%;width:'
-      + (cellW - padX * 2).toFixed(3) + '%;height:' + (cellH - padY * 2).toFixed(3) + '%">'
-      + '<span class="cn">' + n + '</span>'
-      + '<span class="cnm" data-full="' + esc(cageName(n, occ)) + '"></span>'
-      + '</button>';
+    const posStyle = 'left:' + (cellL + padX).toFixed(3) + '%;top:' + (cellT + padY).toFixed(3) + '%;width:'
+      + (cellW - padX * 2).toFixed(3) + '%;height:' + (cellH - padY * 2).toFixed(3) + '%';
+    const portOccs = occ.filter(o => o.kind === 'port');
+    if (portOccs.length > 1) {
+      // Breakout cage: outer non-interactive container + per-channel sublane buttons
+      const contCls = cls.filter(c => c !== 'sel' && c !== 'dragsrc');
+      contCls.push('breakout');
+      const laneHtml = portOccs.map(o => {
+        const lc = ['sublane', 'sl-assigned'];
+        if (state.sel.kind === 'port' && state.sel.num === n && state.sel.name === o.name) lc.push('sl-sel');
+        if (state.sel.kind === 'connection') {
+          const sc = connections()[state.sel.idx];
+          if (sc && (sc.endpoints || []).some(ep => ep && ep.port_name === o.name)) lc.push('sl-inconn');
+        }
+        if (state.drag && state.drag.fromNum === n && state.drag.fromName === o.name) lc.push('sl-dragsrc');
+        const ch = o.channel ? ' · ch' + o.channel : '';
+        return '<button class="' + lc.join(' ') + '" data-num="' + n + '" data-portname="' + esc(o.name) + '" title="P' + n + ' · ' + esc(o.name) + esc(ch) + '">'
+          + '<span class="cnm" data-full="' + esc(o.name) + '"></span>'
+          + '</button>';
+      }).join('');
+      html += '<div class="' + contCls.join(' ') + '" data-num="' + n + '" title="' + esc(cageTitle(n, occ)) + '" style="' + posStyle + '">'
+        + laneHtml + '</div>';
+    } else {
+      html += '<button class="' + cls.join(' ') + '" data-num="' + n + '" title="' + esc(cageTitle(n, occ)) + '" style="' + posStyle + '">'
+        + '<span class="cn">' + n + '</span>'
+        + '<span class="cnm" data-full="' + esc(cageName(n, occ)) + '"></span>'
+        + '</button>';
+    }
   }
   layer.innerHTML = html;
   layer.classList.toggle('locked', !state.jsonValid);
@@ -1039,9 +1051,7 @@ function renderChassis() {
   $('#lockBanner').classList.toggle('hidden', state.jsonValid);
   if (!state.jsonValid) {
     const breakout = !!state.breakoutBlocked;
-    $('#lockMsg').textContent = breakout
-      ? 'This config uses breakout channels. This tool is whole-port only (one cage = one port), so it will not draw it. Fix the JSON, or open a non-breakout config.'
-      : 'The chassis still shows the last valid configuration. Convert an old-schema file, fix the JSON below, or revert to what the canvas holds.';
+    $('#lockMsg').textContent = 'The chassis still shows the last valid configuration. Convert an old-schema file, fix the JSON below, or revert to what the canvas holds.';
     const conv = $('#lockConvert');
     if (conv) conv.classList.toggle('hidden', breakout);
   }
@@ -1071,6 +1081,7 @@ function legendHtml() {
 /* ------------------------------------------------------------------ render: wires */
 
 function cageEl(n) { return $('#portLayer .cage[data-num="' + n + '"]'); }
+function cageLaneEl(name) { return document.querySelector('#portLayer .sublane[data-portname="' + name + '"]'); }
 
 /* Cage text scales with the rendered cage, and the name line drops out when the
  * cage gets too short for two lines to be legible. Names too long for the cage are
@@ -1256,7 +1267,7 @@ function renderWires() {
     const a = anchorNumOf(eps[0].port_name);
     const b = anchorNumOf(eps[1].port_name);
     if (a == null || b == null) return;
-    drawable.push({ idx: i, conn: c, a, b, ro: state.meta && state.meta.readOnly.has(i) });
+    drawable.push({ idx: i, conn: c, a, b, aName: eps[0].port_name, bName: eps[1].port_name, ro: state.meta && state.meta.readOnly.has(i) });
   });
   well.classList.toggle('dragging', !!state.drag);
   const draft = state.draft;
@@ -1272,7 +1283,14 @@ function renderWires() {
   const cellPx = imgRect.width * (GEOM.w / 100) / COLS;
   sizeCageText();
   renderLeaders(L, svgRect, imgRect);
-  const anchor = n => {
+  const anchor = (n, portName) => {
+    if (portName && occupants(n).filter(o => o.kind === 'port').length > 1) {
+      const le = cageLaneEl(portName);
+      if (le) {
+        const r = le.getBoundingClientRect();
+        return { x: r.left + r.width / 2 - svgRect.left, y: r.bottom - svgRect.top };
+      }
+    }
     const el = cageEl(n);
     if (!el) return null;
     const r = el.getBoundingClientRect();
@@ -1281,7 +1299,7 @@ function renderWires() {
 
   let out = '', badges = '', selBadges = '';
   const emit = (item, lane, isDraft) => {
-    const A = anchor(item.a), B = anchor(item.b);
+    const A = anchor(item.a, item.aName), B = anchor(item.b, item.bName);
     if (!A || !B) return;
     const laneY = baseY + 12 + (lane % 9) * laneGap;
     const off = ((lane % 3) - 1) * 2.5;
@@ -1324,10 +1342,10 @@ function renderWires() {
   drawable.forEach((item, i) => emit(item, i, false));
   if (draft) {
     const a = anchorNumOf(draft.p1), b = anchorNumOf(draft.p2);
-    if (a != null && b != null) emit({ a, b, conn: null, idx: -1 }, drawable.length, true);
+    if (a != null && b != null) emit({ a, b, aName: draft.p1, bName: draft.p2, conn: null, idx: -1 }, drawable.length, true);
   }
   if (state.drag && state.drag.x != null) {
-    const A = anchor(state.drag.fromNum);
+    const A = anchor(state.drag.fromNum, state.drag.fromName);
     if (A) out += '<path id="rubber" d="M ' + A.x + ' ' + A.y + ' L ' + (state.drag.x - svgRect.left) + ' ' + (state.drag.y - svgRect.top) + '"></path>';
   }
   svg.innerHTML = out + badges + selBadges;
@@ -2044,9 +2062,10 @@ function assignPortGroup(nums, profileName, groupName) {
   commit();
 }
 
-function createConnection(num1, num2, choice) {
+function createConnection(num1, num2, choice, name1, name2) {
   // A cage can host a plain port and/or group members; take the highest-priority one.
-  const n1 = dragObjectForCage(num1), n2 = dragObjectForCage(num2);
+  // name1/name2 override when caller knows the specific breakout port.
+  const n1 = name1 || dragObjectForCage(num1), n2 = name2 || dragObjectForCage(num2);
   if (!n1 || !n2 || n1 === n2) return;
   const e1 = { name: n1 }, e2 = { name: n2 };
   if (choice === 'connect_vlan_vxlan' || choice === 'connect_vlan_nvgre') {
@@ -2206,13 +2225,13 @@ function readAssignDialog(back) {
   return { profileName, newProfile, pname, isGroup };
 }
 
-function openTypePicker(num1, num2) {
-  const o1 = dragObjectForCage(num1), o2 = dragObjectForCage(num2);
+function openTypePicker(num1, num2, name1, name2) {
+  const o1 = name1 || dragObjectForCage(num1), o2 = name2 || dragObjectForCage(num2);
   const side = (num, name) => 'P' + num + ' = ' + name + (isGroup(name) ? ' (group ' + portLabel(name) + ')' : '');
   openModal('<div class="modal"><header><h2>Connect P' + num1 + ' \u2192 P' + num2 + '</h2>'
     + '<span class="sub">port1: ' + esc(side(num1, o1)) + ' \u00b7 port2: ' + esc(side(num2, o2)) + '</span></header>'
     + '<div class="body"><div class="typegrid">'
-    + AUTHORED_FNS.map(k => '<button class="typebtn" data-act="pickType" data-choice="' + k + '" data-a="' + num1 + '" data-b="' + num2 + '">'
+    + AUTHORED_FNS.map(k => '<button class="typebtn" data-act="pickType" data-choice="' + k + '" data-a="' + num1 + '" data-b="' + num2 + '" data-aname="' + esc(o1) + '" data-bname="' + esc(o2) + '">'
       + '<span class="t">' + esc(FN[k].label) + '</span><span class="d">' + esc(FN[k].blurb) + '</span></button>').join('')
     + '</div>'
     + '<div class="hint" style="margin-top:12px">Ethernet and ARP are created straight away. VXLAN and NVGRE open a draft first, because the API needs a VNI/VSID and an outer header before the config is usable.</div>'
@@ -2548,7 +2567,7 @@ function onAct(act, el, ev) {
     case 'pickType': {
       const a = Number(el.dataset.a), b = Number(el.dataset.b);
       closeModal();
-      createConnection(a, b, el.dataset.choice);
+      createConnection(a, b, el.dataset.choice, el.dataset.aname || null, el.dataset.bname || null);
       return;
     }
     case 'renameProfile': {
@@ -3664,12 +3683,14 @@ function initEvents() {
   // chassis: click to select/assign, drag to connect
   const layer = $('#portLayer');
   layer.addEventListener('pointerdown', ev => {
+    const sublane = ev.target.closest('.sublane');
     const cage = ev.target.closest('.cage');
     if (!cage || state.align || state.groupPick) return;
     const num = Number(cage.dataset.num);
     if (!isAssigned(num)) return;                  // unassigned: click handled on pointerup
-    state.drag = { fromNum: num, x: ev.clientX, y: ev.clientY, moved: false };
-    cage.setPointerCapture(ev.pointerId);
+    const fromName = sublane ? sublane.dataset.portname : null;
+    state.drag = { fromNum: num, fromName: fromName || null, x: ev.clientX, y: ev.clientY, moved: false };
+    (sublane || cage).setPointerCapture(ev.pointerId);
     renderChassis();
     renderWires();
   });
@@ -3689,11 +3710,13 @@ function initEvents() {
   });
   layer.addEventListener('pointerup', ev => {
     const drag = state.drag;
+    const sublane = ev.target.closest ? ev.target.closest('.sublane') : null;
     const cage = ev.target.closest('.cage');
     const num = cage ? Number(cage.dataset.num) : null;
     if (drag) {
       state.drag = null;
       const over = document.elementFromPoint(ev.clientX, ev.clientY);
+      const tSubLane = over && over.closest ? over.closest('.sublane') : null;
       const target = over && over.closest ? over.closest('.cage') : null;
       const tnum = target ? Number(target.dataset.num) : null;
       if (drag.moved && tnum != null && tnum !== drag.fromNum) {
@@ -3702,23 +3725,28 @@ function initEvents() {
           render(true);
           return;
         }
-        if (dragObjectForCage(drag.fromNum) === dragObjectForCage(tnum)) {
-          toast('Both cages belong to "' + dragObjectForCage(tnum) + '". A connection needs two different ports.');
+        const toName = tSubLane ? tSubLane.dataset.portname : null;
+        const fromObj = drag.fromName || dragObjectForCage(drag.fromNum);
+        const toObj = toName || dragObjectForCage(tnum);
+        if (fromObj === toObj) {
+          toast('Both ports are "' + toObj + '". A connection needs two different ports.');
           render(true);
           return;
         }
-        openTypePicker(drag.fromNum, tnum);
+        openTypePicker(drag.fromNum, tnum, drag.fromName, toName);
         render(true);
         return;
       }
-      state.sel = { kind: 'port', num: drag.fromNum };
+      state.sel = { kind: 'port', num: drag.fromNum, name: drag.fromName || undefined };
       render(true);
       return;
     }
     if (num == null) return;
     if (state.groupPick) { toggleGroupPickCage(num); return; }
-    if (isAssigned(num)) { state.sel = { kind: 'port', num }; render(true); }
-    else openAssign(num);
+    if (isAssigned(num)) {
+      state.sel = { kind: 'port', num, name: sublane ? sublane.dataset.portname : undefined };
+      render(true);
+    } else openAssign(num);
   });
   layer.addEventListener('pointercancel', () => { if (state.drag) { state.drag = null; render(true); } });
 
